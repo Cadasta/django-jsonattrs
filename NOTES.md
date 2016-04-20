@@ -1,17 +1,21 @@
-## Existing Django packages
+## Goals
 
-| Package                 | Last release  | Comment |
-| ----------------------- | ------------- | ------- |
-| `eav-django`            | 2014-07-30    |         |
-| `django-mutant`         | 2016-01-14    | Latest real "dynamic models" package |
-| `django-dynamic-model`  | (2013-05-09)  | Obsolete? |
-| `django-dynamo`         | 2011-08-03    | Obsolete, but useful ideas |
-| `vera` (wq)             | 2016-01-08    | Not quite relevant |
+* Implement a `JSONAttributesField` Django field type to store
+  dynamically specified attributes in a Postgres JSONB database
+  column.
+* Manage schemas for attributes based on model type and optionally
+  model field values (particularly foreign keys to "containing"
+  entities).
+* Support field types and sub-types with detailed validation
+  information, as well as field presence, uniqueness, unique together,
+  etc. constraints.
+* Automatic DRF serialization and deserialization of model instances
+  including JSON attribute fields.
+* Form rendering and validation support for model instances including
+  JSON attribute fields.
+* Django admin pages for schema and field management.
 
-
-## Motivation
-
-From `django-dynamo` documentation:
+Some motivation, from the `django-dynamo` documentation:
 
 > Dynamic models are beneficial for applications that need data
 > structures, which are only known at runtime, but not when the
@@ -32,11 +36,8 @@ From `django-dynamo` documentation:
 >    answers at runtime, but let your users define these, as they
 >    implement their surveys.
 
-
-
-## Requirements
-
-From Jürgen Schackmann's DjangoCon Europe 2013 talk:
+And some requirements, from Jürgen Schackmann's DjangoCon Europe 2013
+talk:
 
 > Must-have components of a dynamic model application:
 >
@@ -49,9 +50,29 @@ From Jürgen Schackmann's DjangoCon Europe 2013 talk:
 > * **Model/cache sync manager** to update and sync the Django models
 >   and model cache
 
+(Not all of these are relevant to us.)
 
 
-## Data modelling notes
+## Existing Django packages
+
+| Package                 | Last release  | Comment |
+| ----------------------- | ------------- | ------- |
+| `eav-django`            | 2014-07-30    |         |
+| `django-mutant`         | 2016-01-14    | Latest real "dynamic models" package |
+| `django-dynamic-model`  | (2013-05-09)  | Obsolete? |
+| `django-dynamo`         | 2011-08-03    | Obsolete, but useful ideas |
+| `vera` (wq)             | 2016-01-08    | Not quite relevant |
+
+Most of these aren't quite relevant, as they completely replace the
+normal Django model base class with something else, to allow for fully
+dynamic schema modification.  We don't really need that here, just a
+way to manage the attributes that can be stored in a JSON database
+column.  That said, some of these have some ideas worth looking at.
+In particular, the attribute field definition in `django-dynamo` is
+something we should probably emulate.
+
+
+## Data modelling notes from wiki
 
 In common with many application platforms like ours, we need some kind
 of dynamic schema extensibility: different projects may have different
@@ -130,8 +151,177 @@ validation mentioned above if it’s required ("local flavour" to go
 with `django-localflavor`).
 
 
+## Design ideas
 
-## Code sketch
+### Schemas and schema selectors
+
+We want to be able to allow JSON attribute fields in different models
+to have different sets of JSON attributes, selected both by the model
+type and potentially by values of fields in the model.  To be
+specific, suppose that we have `Organization`, `Project`, `Party` and
+`SpatialUnit` models, and we want to have different sets of attributes
+for each of these.  Suppose further that `Party` and `SpatialUnit`
+model instances are associated with specific `Project` model
+instances, and `Project` model instances are associated with specific
+`Organization` model instances.  We'd like to represent all of the
+following cases:
+
+ * The attribute schema for a `Party` (i.e. the set of attributes that
+   can be stored in a JSON attribute model field) depend on the
+   `Party`'s project and associated organization.
+ * If no specific attribute schema is available for parties in a given
+   `Project`, an `Organization`-level default attribute schema should
+   be used.  If no such `Organization`-level default schema exists, an
+   overall default attribute schema should be used.  If no such
+   default attribute schema exists, no attributes may be stored in the
+   field.
+ * The attribute schema for a `SpatialUnit` depend on the
+   `SpatialUnit`'s project and associated organization.
+ * If no specific attribute schema is available for `SpatialUnit`s in
+   a given `Project`, an `Organization`-level default attribute schema
+   should be used.  If no such `Organization`-level default schema
+   exists, an overall default attribute schema should be used.  If no
+   such default attribute schema exists, no attributes may be stored
+   in the field.
+ * Attributes for a `Project` depend on the `Project`'s organization.
+ * If no specific attribute schema is available for `Project`s in a
+   given `Organization`, an overall default attribute schema should be
+   used.  If no such default attribute schema exists, no attributes
+   may be stored in the field.
+ * Attributes for `Organization` model instances are determined by an
+   overall default attribute schema.  If no such default attribute
+   schema exists, no attributes may be stored in the field.
+ * If more than one of the entity-specific, project-level,
+   organization-level or global default attribute schemas exist for an
+   entity, then the full attribute schema used is the composition of
+   these schemas, in the order: global default, organization-level,
+   project-level, entity-specific.  During composition, an attribute
+   schema can specify that attributes from an earlier schema be
+   overridden or omitted.
+
+These considerations lead to the ideas of *schemas* and "schema
+selectors":
+
+ * A *schema* is a list of attribute definitions, giving names, types
+   and constraints (required, omit, unique, unique together, etc.) for
+   each.  The schema to use for a given entity is determined by a
+   sequence of *schema selectors*.
+ * The sequence of schema selectors for an entity is made up of the
+   entity's content type, plus an optional sequence of foreign keys
+   derived from the entity.
+
+In the example above, the schema selectors would be set up by using
+something like the following:
+
+```
+class EntityAttributeField(JSONAttributeField):
+  schema_selectors = (('organization', 'project__organization'),
+                      'project')
+```
+
+Once this class is defined, model fields of type
+`EntityAttributeField` can be defined and will select schemas based on
+the `project` field in the entity, and the `organization` field of the
+`project` field (using the name `organization` to refer to the
+selector).
+
+#### Examples
+
+**Schemas**
+
+| ID | content_type |
+| -- | ------------ |
+| 1  | Party        |
+| 2  | Party        |
+| 3  | Party        |
+| 4  | Party        |
+| 5  | SpatialUnit  |
+
+**Schema selectors**
+
+| ID | schema (FK) | index | content_type | value |
+| -- | ----------- | ----- | ------------ | ----- |
+| 1  | 1           | 1     | Organization | null  |
+| 2  | 1           | 2     | Project      | null  |
+| 3  | 2           | 1     | Organization | Org1  |
+| 4  | 2           | 2     | Project      | null  |
+| 5  | 3           | 1     | Organization | Org1  |
+| 6  | 3           | 2     | Project      | Proj1 |
+| 7  | 4           | 1     | Organization | Org1  |
+| 8  | 4           | 2     | Project      | Proj2 |
+| 9  | 5           | 1     | Organization | null  |
+| 10 | 5           | 2     | Project      | null  |
+
+**Attributes**
+
+| ID  | schema | name       | long_name         | type  | subtype        | default    | choices | required | omit  |
+| --- | ------ | ---------- | ----------------- | ----- | -------------- | ---------- | ------- | -------- | ----- |
+| 1   | 1      | birth_date | Date of birth     | date  | null           | null       | null    | true     | false |
+| 2   | 1      | postcode   | Postal code       | text  | id-post-code   | null       | null    | true     | false |
+| 3   | 1      | score      | Survey score      | float | positive-float | PICKLE:0.0 | null    | true     | false |
+| 4   | 2      | education  | Educational level | text  | null           | none       | (1)     | true     | false |
+| 5   | 3      | occupation | Occupation        | text  | null           | null       | null    | true     | false |
+| 6   | 4      | education  | null              | null  | null           | null       | null    | false    | true  |
+| 7   | 5      | ...        | ...               | ...   | ...            | ...        | ...     | ...      | ...   |
+| 8   | 5      | ...        | ...               | ...   | ...            | ...        | ...     | ...      | ...   |
+| ... | 5      | ...        | ...               | ...   | ...            | ...        | ...     | ...      | ...   |
+
+(1) `{'none', 'high-school', 'bachelors', 'masters', 'doctorate'}`
+
+
+
+### Field definitions in attribute schemas
+
+From `django-dynamo`:
+
+```
+STANDARD_FIELD_TYPE_CHOICES = [
+    (field,_(field)) for field in DYNAMO_STANDARD_FIELD_TYPES
+]
+RELATION_FIELD_TYPE_CHOICES = [
+    (field,_(field)) for field in DYNAMO_RELATION_FIELD_TYPES
+]
+FIELD_TYPE_CHOICES = (STANDARD_FIELD_TYPE_CHOICES +
+                      RELATION_FIELD_TYPE_CHOICES)
+
+
+class MetaField(models.Model):
+    name = models.CharField(verbose_name=_('Field Name'),
+                            max_length=50)
+    verbose_name = models.CharField(verbose_name=_('Verbose Name'),
+                                    max_length=50,
+                                    null=True, blank=True)
+    meta_model = models.ForeignKey(MetaModel,
+                                   verbose_name=_('Parent Model'),
+                                   related_name='fields')
+    type = models.CharField(verbose_name=_('Field Type'),
+                            max_length=255,
+                            choices=FIELD_TYPE_CHOICES)
+    related_model = models.CharField(verbose_name=_('Related Model'),
+                                     max_length=50,
+                                     null=True, blank=True)
+    # (models.ForeignKey('contenttypes.ContentType',null=True,blank=True) )
+    description = models.CharField(verbose_name=_('Field Description'),
+                                   max_length=255)
+    order = models.IntegerField(verbose_name=_('Field Position'))
+    unique_together=models.BooleanField(verbose_name=_('Unique Together'))
+    unique=models.BooleanField(verbose_name=_('Unique'))
+    help=models.CharField(verbose_name=_('Help Text'),
+                          max_length=150)
+    choices = models.CharField(verbose_name=_('Choices'),
+                               max_length=200,
+                               blank=True, null=True)
+    default  = models.CharField(verbose_name=_('Default Value'),
+                                max_length=50,
+                                blank=True)
+    required = models.BooleanField(verbose_name=_('Required'),
+                                   default=False)
+
+    ...
+```
+
+
+## Initial code sketch (totally wrong, of course...)
 
 ```
 from django.db.models import Model

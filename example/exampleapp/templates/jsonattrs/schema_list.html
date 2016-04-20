@@ -1,0 +1,30 @@
+{% extends "exampleapp/base.html" %}
+
+{% block title %}Schema list{% endblock %}
+
+{% block back %}
+<a href="{% url 'index' %}">Back to index</a>
+<hr>
+{% endblock %}
+
+{% block content %}
+<table>
+  <thead>
+    <tr>
+      <th>Content type</th>
+      <th>Organization</th>
+      <th>Project</th>
+    </tr>
+  </thead>
+  {% for row in table_data %}
+  <tr>
+    <td>{{ row.content_type }}</td>
+    <td>{{ row.organization }}</td>
+    <td>{{ row.project }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<br>
+<a href="{% url 'schema-add' %}">Create new schema</a>
+{% endblock %}

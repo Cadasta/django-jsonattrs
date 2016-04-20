@@ -62,3 +62,4 @@ target/
 .ipynb_checkpoints
 /.envrc
 /.virtualenv/
+/example/db.sqlite3

@@ -15,12 +15,17 @@ class Schema(models.Model):
         return str(self)
 
 
+# Need a custom manager here to maintain the unique together
+# constraint across schema.content_type and [sel.selector for sel in
+# schema.selectors.all()].
+
+
 class SchemaSelector(models.Model):
     schema = models.ForeignKey(Schema, on_delete=models.CASCADE,
                                related_name='selectors')
     index = models.IntegerField()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.CharField(max_length=255)
+    object_id = models.CharField(max_length=255, null=True, blank=True)
     selector = GenericForeignKey()
 
     class Meta:

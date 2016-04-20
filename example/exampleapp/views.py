@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.forms import ModelForm, ModelChoiceField
 from django.contrib.contenttypes.models import ContentType
 import django.db.transaction as transaction
+from django.db.utils import OperationalError
 
 from jsonattrs.models import Schema, SchemaSelector
 
@@ -12,8 +13,14 @@ from .models import Organization, Project, Party, Parcel
 from .forms import SchemaForm
 
 
-org_t = ContentType.objects.get(app_label='exampleapp', model='organization')
-proj_t = ContentType.objects.get(app_label='exampleapp', model='project')
+try:
+    org_t = ContentType.objects.get(app_label='exampleapp',
+                                    model='organization')
+    proj_t = ContentType.objects.get(app_label='exampleapp',
+                                     model='project')
+except OperationalError:
+    # Happens when constructing database migrations from scratch.
+    pass
 
 
 # ----------------------------------------------------------------------

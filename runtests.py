@@ -12,7 +12,7 @@ PYTEST_ARGS = {
     'fast': ['tests', '-q'],
 }
 
-FLAKE8_ARGS = ['jsonattrs', 'tests']
+FLAKE8_ARGS = ['jsonattrs', 'tests', '--exclude=migrations']
 
 
 sys.path.append(os.path.dirname(__file__))

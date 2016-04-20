@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to django-jsonattrs's documentation!
-===========================================
+============================================
 
 The django-jsonattrs package provides a limited "dynamic model"
 mechanism for Django, based on managing model "attributes" that are

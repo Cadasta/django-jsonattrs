@@ -1,6 +1,6 @@
-# Minimum Django version
 Django==1.9
 djangorestframework==3.3.2
+psycopg2==2.6.1
 
 # Test requirements
 tox==2.3.1

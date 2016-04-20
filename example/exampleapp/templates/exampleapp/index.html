@@ -1,0 +1,12 @@
+{% extends "exampleapp/base.html" %}
+
+{% block title %}Home page{% endblock %}
+
+{% block content %}
+<ul>
+  <li><a href="{% url 'organization-list' %}">Organizations</a></li>
+  <li><a href="{% url 'project-list' %}">Projects</a></li>
+  <li><a href="{% url 'party-list' %}">Parties</a></li>
+  <li><a href="{% url 'parcel-list' %}">Parcels</a></li>
+</ul>
+{% endblock %}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>jsonattrs example app</title>
+    <style>
+     .messages {
+       border: 2px solid red;
+       padding: 0px 10px;
+       color: #AA0000;
+       margin-bottom: 10px;
+     }
+    </style>
+  </head>
+
+  <body>
+    <div id="container">
+
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% block back %}{% endblock %}
+
+        {% if actions %}
+          Actions: {% for a in actions %}
+            {{ a }} &nbsp;
+          {% endfor %}
+          <hr>
+        {% endif %}
+
+      <h2>{% block title %}{% endblock %}</h2>
+
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

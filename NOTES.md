@@ -5,7 +5,7 @@
 | `eav-django`            | 2014-07-30    |         |
 | `django-mutant`         | 2016-01-14    | Latest real "dynamic models" package |
 | `django-dynamic-model`  | (2013-05-09)  | Obsolete? |
-| `django-dynamo`         | 2011-08-03    | Obsolete |
+| `django-dynamo`         | 2011-08-03    | Obsolete, but useful ideas |
 | `vera` (wq)             | 2016-01-08    | Not quite relevant |
 
 
@@ -40,13 +40,13 @@ From Jürgen Schackmann's DjangoCon Europe 2013 talk:
 
 > Must-have components of a dynamic model application:
 >
-> * *Meta-model front end* to let users maintain their meta-models
-> * *Meta-model representation* to store the meta-model information
-> * *Meta-model analyser* to detect changes that require some further
+> * **Meta-model front end** to let users maintain their meta-models
+> * **Meta-model representation** to store the meta-model information
+> * **Meta-model analyser** to detect changes that require some further
 >   actions (for schema, admin or model)
-> * *Schema sync manager* to update and sync the database schema
-> * *Admin sync manager* to update and sync the Django admin
-> * *Model/cache sync manager* to update and sync the Django models
+> * **Schema sync manager** to update and sync the database schema
+> * **Admin sync manager** to update and sync the Django admin
+> * **Model/cache sync manager** to update and sync the Django models
 >   and model cache
 
 

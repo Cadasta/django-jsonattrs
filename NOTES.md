@@ -1,12 +1,12 @@
 ## Existing Django packages
 
-Package                 Last release  Comment
--------                 ------------  -------
-`eav-django`            2014-07-30
-`django-mutant`         2016-01-14    Latest real "dynamic models" package
-`django-dynamic-model`  (2013-05-09)  Obsolete?
-`django-dynamo`         2011-08-03    Obsolete
-`vera` (wq)             2016-01-08    Not quite relevant
+| Package                 | Last release  | Comment |
+| ----------------------- | ------------- | ------- |
+| `eav-django`            | 2014-07-30    |         |
+| `django-mutant`         | 2016-01-14    | Latest real "dynamic models" package |
+| `django-dynamic-model`  | (2013-05-09)  | Obsolete? |
+| `django-dynamo`         | 2011-08-03    | Obsolete |
+| `vera` (wq)             | 2016-01-08    | Not quite relevant |
 
 
 ## Motivation

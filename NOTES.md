@@ -229,28 +229,28 @@ selector).
 
 **Schemas**
 
-| ID | content_type |
-| -- | ------------ |
-| 1  | Party        |
-| 2  | Party        |
-| 3  | Party        |
-| 4  | Party        |
-| 5  | SpatialUnit  |
+| ID  | content_type |
+| --- | ------------ |
+| 1   | Party        |
+| 2   | Party        |
+| 3   | Party        |
+| 4   | Party        |
+| 5   | SpatialUnit  |
 
 **Schema selectors**
 
-| ID | schema (FK) | index | content_type | value |
-| -- | ----------- | ----- | ------------ | ----- |
-| 1  | 1           | 1     | Organization | null  |
-| 2  | 1           | 2     | Project      | null  |
-| 3  | 2           | 1     | Organization | Org1  |
-| 4  | 2           | 2     | Project      | null  |
-| 5  | 3           | 1     | Organization | Org1  |
-| 6  | 3           | 2     | Project      | Proj1 |
-| 7  | 4           | 1     | Organization | Org1  |
-| 8  | 4           | 2     | Project      | Proj2 |
-| 9  | 5           | 1     | Organization | null  |
-| 10 | 5           | 2     | Project      | null  |
+| ID  | schema (FK) | index | content_type | value |
+| --- | ----------- | ----- | ------------ | ----- |
+| 1   | 1           | 1     | Organization | null  |
+| 2   | 1           | 2     | Project      | null  |
+| 3   | 2           | 1     | Organization | Org1  |
+| 4   | 2           | 2     | Project      | null  |
+| 5   | 3           | 1     | Organization | Org1  |
+| 6   | 3           | 2     | Project      | Proj1 |
+| 7   | 4           | 1     | Organization | Org1  |
+| 8   | 4           | 2     | Project      | Proj2 |
+| 9   | 5           | 1     | Organization | null  |
+| 10  | 5           | 2     | Project      | null  |
 
 **Attributes**
 

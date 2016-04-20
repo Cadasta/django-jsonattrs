@@ -8,9 +8,16 @@ from .settings import FIELD_TYPES
 class Schema(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return '<Schema #{}: {}>'.format(self.id, self.content_type)
+
+    def __repr__(self):
+        return str(self)
+
 
 class SchemaSelector(models.Model):
-    schema = models.ForeignKey(Schema, on_delete=models.CASCADE)
+    schema = models.ForeignKey(Schema, on_delete=models.CASCADE,
+                               related_name='selectors')
     index = models.IntegerField()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.CharField(max_length=255)
@@ -18,6 +25,15 @@ class SchemaSelector(models.Model):
 
     class Meta:
         ordering = ('index',)
+
+    def __str__(self):
+        return '<SchemaSelector #{} ({}/{}): {}>'.format(
+            self.id, self.index, self.schema.selectors.count(),
+            self.selector
+        )
+
+    def __repr__(self):
+        return str(self)
 
 
 FIELD_TYPE_CHOICES = [(field, field) for field in FIELD_TYPES]

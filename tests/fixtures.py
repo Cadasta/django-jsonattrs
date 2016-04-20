@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.models import ContentType
+
 from .factories import (
     OrganizationFactory, ProjectFactory, PartyFactory, ParcelFactory
 )
@@ -29,3 +31,8 @@ def create_fixtures():
                     project=proj
                 )
                 res['party{}{}{}'.format(iorg, iprj, ient)] = party
+
+    for m in ['organization', 'project', 'party', 'parcel']:
+        res[m + '_t'] = ContentType.objects.get(app_label='tests', model=m)
+
+    return res

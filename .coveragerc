@@ -1,0 +1,6 @@
+[run]
+omit =
+    tests/*
+    example/*
+    jsonattrs/migrations/*
+    jsonattrs/__init__.py

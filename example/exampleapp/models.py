@@ -44,6 +44,7 @@ class Party(models.Model):
 
 class Contract(models.Model):
     department = models.ForeignKey(Department, related_name='contracts')
+    responsible = models.ForeignKey(Party)
     attrs = EntityAttributeField(null=True)
 
     class Meta:

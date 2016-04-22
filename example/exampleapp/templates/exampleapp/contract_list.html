@@ -8,13 +8,25 @@
 {% endblock %}
 
 {% block content %}
-<ul>
-  {% for contract in object_list %}
-    <li>
-      <a href="{% url 'contract-detail' contract.id %}">Contract {{ contract.pk }}</a>
-    </li>
-  {% endfor %}
-</ul>
+<table>
+  <thead>
+    <th>ID</th>
+    <th>Responsible</th>
+    <th>Division</th>
+    <th>Department</th>
+  </thead>
+  <tbody>
+    {% for contract in object_list %}
+    <tr>
+      <td><a href="{% url 'contract-detail' contract.id %}">Contract {{ contract.pk }}</a></td>
+      <td>{{ contract.responsible.name }}</td>
+      <td>{{ contract.department.division.name }}</td>
+      <td>{{ contract.department.name }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
+<br>
 <a href="{% url 'contract-add' %}">Create new contract</a>
 {% endblock %}

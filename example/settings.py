@@ -89,3 +89,7 @@ DATABASES = {
 # Static files (CSS, JavaScript, Images)
 
 STATIC_URL = '/static/'
+
+
+JSONATTRS_SCHEMA_SELECTORS = (('division', 'division__department'),
+                              'department')

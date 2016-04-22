@@ -12,16 +12,16 @@
   <thead>
     <tr>
       <th>Content type</th>
-      <th>Organization</th>
-      <th>Project</th>
+      <th>Division</th>
+      <th>Department</th>
       <th></th>
     </tr>
   </thead>
   {% for row in table_data %}
   <tr>
     <td>{{ row.content_type }}</td>
-    <td>{{ row.organization }}</td>
-    <td>{{ row.project }}</td>
+    <td>{{ row.division|default_if_none:"&mdash;" }}</td>
+    <td>{{ row.department|default_if_none:"&mdash;" }}</td>
     <td><a href="{% url 'schema-delete' row.schema.pk %}">Delete</a></td>
   </tr>
   {% endfor %}

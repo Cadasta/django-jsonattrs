@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 from jsonattrs.models import Schema, SchemaSelector
 
 from .fixtures import create_fixtures
-from .factories import SchemaFactory
 
 
 class SchemataTest(TestCase):
@@ -26,7 +25,7 @@ class SchemataTest(TestCase):
         assert repr(selector) == '<SchemaSelector #1 (1/1): Organization #1>'
 
     def test_manual_schema_setup(self):
-        schema = SchemaFactory.create(
+        schema = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
         )
@@ -34,49 +33,49 @@ class SchemataTest(TestCase):
                 [self.fixtures['org1'], self.fixtures['proj11']])
 
     def test_schema_unique_together_ok(self):
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
         ).full_clean()
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['parcel_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
         ).full_clean()
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj12'])
         ).full_clean()
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org2'], self.fixtures['proj21'])
         ).full_clean()
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org2'],)
         ).full_clean()
 
     def test_schema_unique_together_overlap(self):
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
         )
-        test_schema1 = SchemaFactory.create(
+        test_schema1 = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
         )
         with pytest.raises(ValidationError):
             test_schema1.full_clean()
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'],)
         ).full_clean()
-        SchemaFactory.create(
+        Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=()
         ).full_clean()
 
     def test_schema_deletion(self):
-        test_schema = SchemaFactory.create(
+        test_schema = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
         )

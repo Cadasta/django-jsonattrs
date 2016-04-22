@@ -1,4 +1,4 @@
-from itertools import groupby
+from itertools import groupby, count
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -6,6 +6,34 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
 from .settings import FIELD_TYPES
+
+
+class SchemaManager(models.Manager):
+    def create(self, content_type, selectors=()):
+        schema = super().create(content_type=content_type)
+        for selector, index in zip(selectors, count(1)):
+            SchemaSelector.objects.create(
+                schema=schema, index=index, selector=selector
+            )
+        return schema
+
+    def by_selectors(self, content_type, selectors=()):
+        # Find possible matching schemata based on content type.
+        schemata = Schema.objects.filter(content_type=content_type)
+
+        # Retrieve schema selectors for these schemata, grouping by
+        # schema (they'll be returned in index order).
+        grouped = [(k, tuple(ss.selector for ss in g))
+                   for k, g
+                   in groupby(
+                       SchemaSelector.objects.filter(schema__in=schemata),
+                       lambda ss: ss.schema
+                   )]
+
+        # Find matches and return schemas as a queryset.
+        pks = map(lambda g: g[0].pk,
+                  filter(lambda g: g[1] == selectors, grouped))
+        return self.filter(pk__in=pks)
 
 
 class Schema(models.Model):
@@ -41,12 +69,12 @@ class Schema(models.Model):
         # Make a list of tuples of selector objects for each schema
         # for us to match against the selector objects of the schema
         # being validated.
-        selectors = list(map(lambda ss: tuple([s.selector for s in ss]),
+        selectors = list(map(lambda ss: tuple(s.selector for s in ss),
                              selectors_tmp))
 
         # Make a tuple of selector objects for the schema being
         # validated.
-        check = tuple([s.selector for s in self.selectors.all()])
+        check = tuple(s.selector for s in self.selectors.all())
 
         # If the selector object tuple for the schema being validated
         # occurs in the list of selector object tuples retrieved for
@@ -58,6 +86,8 @@ class Schema(models.Model):
                 message="Non-unique schema selectors in jsonattrs",
                 code='unique_together'
             )
+
+    objects = SchemaManager()
 
 
 class SchemaSelector(models.Model):
@@ -87,11 +117,10 @@ FIELD_TYPE_CHOICES = [(field, field) for field in FIELD_TYPES]
 class Attribute(models.Model):
     name = models.CharField(max_length=50)
     long_name = models.CharField(max_length=50, blank=True)
-    schema = models.ForeignKey(Schema, related_name='fields')
-    type = models.CharField(max_length=255, choices=FIELD_TYPE_CHOICES)
+    schema = models.ForeignKey(Schema, related_name='attributes')
+    coarse_type = models.CharField(max_length=255, choices=FIELD_TYPE_CHOICES)
     subtype = models.CharField(max_length=255, blank=True)
-    related_model = models.ForeignKey(ContentType, null=True)
-    order = models.IntegerField()
+    index = models.IntegerField()
     unique_together = models.BooleanField()
     unique = models.BooleanField()
     choices = models.CharField(max_length=200, blank=True)

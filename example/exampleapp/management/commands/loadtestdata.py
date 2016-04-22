@@ -1,7 +1,9 @@
 from django.core.management.base import BaseCommand
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 
-from exampleapp.models import Party
+from jsonattrs.models import Schema
+from exampleapp.models import Division, Department, Party
 
 
 DATA = [
@@ -60,8 +62,17 @@ DATA = [
 ]
 
 
+def named_content_type(name):
+    return ContentType.objects.get(app_label='exampleapp', model=name)
+
+
 def delete_object(typ, args, parent_typ, parent_obj):
-    typ.model_class().objects.filter(**args).delete()
+    try:
+        if 'responsible' in args:
+            args['responsible'] = Party.objects.get(name=args['responsible'])
+        typ.model_class().objects.filter(**args).delete()
+    except ObjectDoesNotExist:
+        pass
 
 
 def create_object(typ, args, parent_typ, parent_obj):
@@ -78,14 +89,118 @@ def create_object(typ, args, parent_typ, parent_obj):
         return typ.model_class().objects.create(**args)
 
 
-def process(action, data, parent_typ=None, parent_obj=None):
+def process_data(action, data, parent_typ=None, parent_obj=None):
     for obj in data:
-        typ = ContentType.objects.get(
-            app_label='exampleapp', model=obj['type']
-        )
+        typ = named_content_type(obj['type'])
         new_obj = action(typ, obj['args'], parent_typ, parent_obj)
         if 'sub_objects' in obj:
-            process(action, obj['sub_objects'], obj['type'], new_obj)
+            process_data(action, obj['sub_objects'], obj['type'], new_obj)
+
+
+SCHEMATA = [
+    {'content_type': 'division',
+     'selectors': (),
+     'fields': [
+         {'name': 'turnover', 'long_name': 'Total divisional turnover',
+          'coarse_type': 'IntField', 'subtype': 'currency',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': False, 'omit': False}
+     ]},
+
+    {'content_type': 'department',
+     'selectors': (),
+     'fields': [
+         {'name': 'chief', 'long_name': 'Department chief',
+          'coarse_type': 'CharField', 'subtype': 'FK:Party',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': False, 'omit': False}
+     ]},
+
+    {'content_type': 'party',
+     'selectors': (),
+     'fields': [
+         {'name': 'office', 'long_name': 'City of base office',
+          'coarse_type': 'CharField', 'subtype': 'city',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': True, 'omit': False},
+         {'name': 'salary', 'long_name': 'Employee salary',
+          'coarse_type': 'IntField', 'subtype': 'currency',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': False, 'omit': False}
+     ]},
+    {'content_type': 'party',
+     'selectors': ('Civil',),
+     'fields': [
+         {'name': 'digger', 'long_name': 'Can dig!',
+          'coarse_type': 'BooleanField', 'subtype': '',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': True, 'omit': False},
+         {'name': 'certification', 'long_name': 'CEng certification level',
+          'coarse_type': 'ChoiceField', 'subtype': '',
+          'unique_together': False, 'unique': False,
+          'choices': 'None,Apprentice,Journeyman,Master', 'default': 'None',
+          'required': True, 'omit': False}
+     ]},
+    {'content_type': 'party',
+     'selectors': ('Civil', 'Bridges'),
+     'fields': [
+         {'name': 'vertigo', 'long_name': 'Gets vertigo',
+          'coarse_type': 'BooleanField', 'subtype': '',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': True, 'omit': False}
+     ]},
+    {'content_type': 'party',
+     'selectors': ('Marine',),
+     'fields': [
+         {'name': 'aquatic', 'long_name': 'Can breathe underwater!',
+          'coarse_type': 'BooleanField', 'subtype': '',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': True, 'omit': False}
+     ]},
+
+    {'content_type': 'contract',
+     'selectors': (),
+     'fields': [
+         {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
+          'coarse_type': 'CharField', 'subtype': 'country',
+          'unique_together': False, 'unique': False,
+          'choices': '', 'default': '', 'required': True, 'omit': False}
+     ]}
+]
+
+
+def selectors_from_names(selector_names):
+    div = None
+    dept = None
+    if len(selector_names) > 0:
+        div = Division.objects.get(name=selector_names[0])
+    if len(selector_names) > 1:
+        dept = Department.objects.get(name=selector_names[1])
+    if div is not None and dept is not None:
+        return (div, dept)
+    elif div is not None:
+        return (div,)
+    else:
+        return ()
+
+
+def delete_schemata():
+    for schema in SCHEMATA:
+        try:
+            Schema.objects.by_selectors(
+                content_type=named_content_type(schema['content_type']),
+                selectors=selectors_from_names(schema['selectors'])
+            ).delete()
+        except ObjectDoesNotExist:
+            pass
+
+
+def create_schemata():
+    for schema in SCHEMATA:
+        Schema.objects.create(
+            content_type=named_content_type(schema['content_type']),
+            selectors=selectors_from_names(schema['selectors'])
+        )
 
 
 class Command(BaseCommand):
@@ -99,6 +214,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['delete']:
-            process(delete_object, DATA)
+            process_data(delete_object, DATA)
+            delete_schemata()
         else:
-            process(create_object, DATA)
+            process_data(create_object, DATA)
+            create_schemata()

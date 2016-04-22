@@ -44,19 +44,23 @@ class SchemaList(generic.ListView):
         def row_key(row):
             key = str(row['content_type'])
             key += ':'
-            key += row['division'].name if row['division'] else ' '
+            key += row['division'] if row['division'] else ' '
             key += ':'
-            key += row['department'].name if row['department'] else ' '
+            key += row['department'] if row['department'] else ' '
             return key
 
         context = super().get_context_data(*args, **kwargs)
         table_data = []
         for schema in context['object_list']:
-            div_selector = schema.selectors.get(index=1)
-            dept_selector = schema.selectors.get(index=2)
+            div_selector = None
+            if schema.selectors.count() > 0:
+                div_selector = schema.selectors.get(index=1).selector.name
+            dept_selector = None
+            if schema.selectors.count() > 1:
+                dept_selector = schema.selectors.get(index=2).selector.name
             table_data.append({'content_type': schema.content_type,
-                               'division': div_selector.selector,
-                               'department': dept_selector.selector,
+                               'division': div_selector,
+                               'department': dept_selector,
                                'schema': schema})
         context['table_data'] = sorted(table_data, key=row_key)
         return context

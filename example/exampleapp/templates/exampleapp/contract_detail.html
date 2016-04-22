@@ -1,0 +1,30 @@
+{% extends "exampleapp/base.html" %}
+
+{% block title %}Contract details{% endblock %}
+
+{% block back %}
+<a href="{% url 'contract-list' %}">Back to contract list</a>
+<hr>
+{% endblock %}
+
+{% block content %}
+<table>
+  <tr>
+    <td>ID:</td>
+    <td>{{ object.pk }}</td>
+  </tr>
+  <tr>
+    <td>Division:</td>
+    <td>{{ object.department.division.name }}</td>
+  </tr>
+  <tr>
+    <td>Department:</td>
+    <td>{{ object.department.name }}</td>
+  </tr>
+</table>
+
+<br>
+
+<a href="{% url 'contract-update' object.pk %}">Edit</a>
+<a href="{% url 'contract-delete' object.pk %}">Delete</a>
+{% endblock %}

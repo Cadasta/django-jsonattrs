@@ -4,7 +4,7 @@ from django.db import models
 from .fields import EntityAttributeField
 
 
-class Organization(models.Model):
+class Division(models.Model):
     name = models.CharField(max_length=100)
     attrs = EntityAttributeField(null=True)
 
@@ -15,37 +15,42 @@ class Organization(models.Model):
         return self.name
 
 
-class Project(models.Model):
+class Department(models.Model):
     name = models.CharField(max_length=100)
-    organization = models.ForeignKey(Organization)
+    division = models.ForeignKey(Division, related_name='departments')
     attrs = EntityAttributeField(null=True)
 
     class Meta:
-        ordering = ('organization', 'name')
+        ordering = ('division', 'name')
 
     def __str__(self):
         return self.name
 
 
 class Party(models.Model):
-    project = models.ForeignKey(Project)
+    department = models.ForeignKey(Department, related_name='parties')
     name = models.CharField(max_length=100)
     attrs = EntityAttributeField(null=True)
 
     class Meta:
-        ordering = ('project', 'name')
+        ordering = ('department', 'name')
 
     def get_absolute_url(self):
         return reverse('party-detail', kwargs={'pk': self.pk})
 
+    def __str__(self):
+        return self.name
 
-class Parcel(models.Model):
-    project = models.ForeignKey(Project)
-    address = models.CharField(max_length=200)
+
+class Contract(models.Model):
+    department = models.ForeignKey(Department, related_name='contracts')
     attrs = EntityAttributeField(null=True)
 
     class Meta:
-        ordering = ('project', 'address')
+        ordering = ('department', 'pk')
 
     def get_absolute_url(self):
         return reverse('parcel-detail', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return str(self.pk)

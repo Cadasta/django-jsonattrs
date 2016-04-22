@@ -1,11 +1,9 @@
 {% extends "exampleapp/base.html" %}
 
-{% block title %}
-Create parcel
-{% endblock %}
+{% block title %}Create division{% endblock %}
 
 {% block back %}
-<a href="{% url 'parcel-list' %}">Back to parcel list</a>
+<a href="{% url 'division-list' %}">Back to division list</a>
 <hr>
 {% endblock %}
 
@@ -13,7 +11,7 @@ Create parcel
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
   <input type="submit" value="Create" />
-  <a href="{% url 'parcel-list' %}">
+  <a href="{% url 'division-list' %}">
     <input type="button" value="Cancel" />
   </a>
 </form>

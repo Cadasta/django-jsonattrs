@@ -74,3 +74,11 @@ class SchemataTest(TestCase):
             content_type=self.fixtures['party_t'],
             selectors=()
         ).full_clean()
+
+    def test_schema_deletion(self):
+        test_schema = SchemaFactory.create(
+            content_type=self.fixtures['party_t'],
+            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
+        )
+        test_schema.delete()
+        assert SchemaSelector.objects.count() == 0

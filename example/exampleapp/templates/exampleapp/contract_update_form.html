@@ -1,9 +1,9 @@
 {% extends "exampleapp/base.html" %}
 
-{% block title %}Update parcel{% endblock %}
+{% block title %}Update contract{% endblock %}
 
 {% block back %}
-<a href="{% url 'parcel-list' %}">Back to parcel list</a>
+<a href="{% url 'contract-list' %}">Back to contract list</a>
 <hr>
 {% endblock %}
 
@@ -11,7 +11,7 @@
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
   <input type="submit" value="Update" />
-  <a href="{% url 'parcel-detail' object.pk %}">
+  <a href="{% url 'contract-detail' object.pk %}">
     <input type="button" value="Cancel" />
   </a>
 </form>

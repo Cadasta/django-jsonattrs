@@ -1,9 +1,9 @@
 {% extends "exampleapp/base.html" %}
 
-{% block title %}Create organization{% endblock %}
+{% block title %}Create department{% endblock %}
 
 {% block back %}
-<a href="{% url 'organization-list' %}">Back to organization list</a>
+<a href="{% url 'department-list' %}">Back to department list</a>
 <hr>
 {% endblock %}
 
@@ -11,7 +11,7 @@
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
   <input type="submit" value="Create" />
-  <a href="{% url 'organization-list' %}">
+  <a href="{% url 'department-list' %}">
     <input type="button" value="Cancel" />
   </a>
 </form>

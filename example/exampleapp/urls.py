@@ -2,11 +2,12 @@ from django.conf.urls import url
 
 from .views import (
     IndexView,
-    SchemaList, SchemaCreate,
-    OrganizationList, OrganizationCreate, OrganizationDelete,
-    ProjectList, ProjectCreate, ProjectDelete,
+    SchemaList, SchemaCreate, SchemaDelete,
+    DivisionList, DivisionCreate, DivisionDelete,
+    DepartmentList, DepartmentCreate, DepartmentDelete,
     PartyList, PartyDetail, PartyCreate, PartyUpdate, PartyDelete,
-    ParcelList, ParcelDetail, ParcelCreate, ParcelUpdate, ParcelDelete)
+    ContractList, ContractDetail, ContractCreate, ContractUpdate,
+    ContractDelete)
 
 urlpatterns = [
     url(r'^$', IndexView.as_view(), name='index'),
@@ -15,18 +16,21 @@ urlpatterns = [
         name='schema-list'),
     url(r'^schema/add/$', SchemaCreate.as_view(),
         name='schema-add'),
+    url(r'^schema/(?P<pk>\d+)/delete/$', SchemaDelete.as_view(),
+        name='schema-delete'),
 
-    url(r'^organization/$', OrganizationList.as_view(),
-        name='organization-list'),
-    url(r'^organization/add/$', OrganizationCreate.as_view(),
-        name='organization-add'),
-    url(r'^organization/(?P<pk>\d+)/delete/$', OrganizationDelete.as_view(),
-        name='organization-delete'),
+    url(r'^division/$', DivisionList.as_view(),
+        name='division-list'),
+    url(r'^division/add/$', DivisionCreate.as_view(),
+        name='division-add'),
+    url(r'^division/(?P<pk>\d+)/delete/$', DivisionDelete.as_view(),
+        name='division-delete'),
 
-    url(r'^project/$', ProjectList.as_view(), name='project-list'),
-    url(r'^project/add/$', ProjectCreate.as_view(), name='project-add'),
-    url(r'^project/(?P<pk>\d+)/delete/$', ProjectDelete.as_view(),
-        name='project-delete'),
+    url(r'^department/$', DepartmentList.as_view(), name='department-list'),
+    url(r'^department/add/$', DepartmentCreate.as_view(),
+        name='department-add'),
+    url(r'^department/(?P<pk>\d+)/delete/$', DepartmentDelete.as_view(),
+        name='department-delete'),
 
     url(r'^party/$', PartyList.as_view(), name='party-list'),
     url(r'^party/(?P<pk>\d+)/$', PartyDetail.as_view(), name='party-detail'),
@@ -36,12 +40,12 @@ urlpatterns = [
     url(r'^party/(?P<pk>\d+)/delete/$', PartyDelete.as_view(),
         name='party-delete'),
 
-    url(r'^parcel/$', ParcelList.as_view(), name='parcel-list'),
-    url(r'^parcel/(?P<pk>\d+)/$', ParcelDetail.as_view(),
-        name='parcel-detail'),
-    url(r'^parcel/add/$', ParcelCreate.as_view(), name='parcel-add'),
-    url(r'^parcel/(?P<pk>\d+)/edit/$', ParcelUpdate.as_view(),
-        name='parcel-update'),
-    url(r'^parcel/(?P<pk>\d+)/delete/$', ParcelDelete.as_view(),
-        name='parcel-delete'),
+    url(r'^contract/$', ContractList.as_view(), name='contract-list'),
+    url(r'^contract/(?P<pk>\d+)/$', ContractDetail.as_view(),
+        name='contract-detail'),
+    url(r'^contract/add/$', ContractCreate.as_view(), name='contract-add'),
+    url(r'^contract/(?P<pk>\d+)/edit/$', ContractUpdate.as_view(),
+        name='contract-update'),
+    url(r'^contract/(?P<pk>\d+)/delete/$', ContractDelete.as_view(),
+        name='contract-delete'),
 ]

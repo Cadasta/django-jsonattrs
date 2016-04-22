@@ -9,15 +9,15 @@ from django.db.utils import OperationalError
 
 from jsonattrs.models import Schema, SchemaSelector
 
-from .models import Organization, Project, Party, Parcel
+from .models import Division, Department, Party, Contract
 from .forms import SchemaForm
 
 
 try:
-    org_t = ContentType.objects.get(app_label='exampleapp',
-                                    model='organization')
-    proj_t = ContentType.objects.get(app_label='exampleapp',
-                                     model='project')
+    div_t = ContentType.objects.get(app_label='exampleapp',
+                                    model='division')
+    dept_t = ContentType.objects.get(app_label='exampleapp',
+                                     model='department')
 except OperationalError:
     # Happens when constructing database migrations from scratch.
     pass
@@ -44,19 +44,20 @@ class SchemaList(generic.ListView):
         def row_key(row):
             key = str(row['content_type'])
             key += ':'
-            key += row['organization'].name if row['organization'] else ' '
+            key += row['division'].name if row['division'] else ' '
             key += ':'
-            key += row['project'].name if row['project'] else ' '
+            key += row['department'].name if row['department'] else ' '
             return key
 
         context = super().get_context_data(*args, **kwargs)
         table_data = []
         for schema in context['object_list']:
-            org_selector = schema.selectors.get(index=1)
-            proj_selector = schema.selectors.get(index=2)
+            div_selector = schema.selectors.get(index=1)
+            dept_selector = schema.selectors.get(index=2)
             table_data.append({'content_type': schema.content_type,
-                               'organization': org_selector.selector,
-                               'project': proj_selector.selector})
+                               'division': div_selector.selector,
+                               'department': dept_selector.selector,
+                               'schema': schema})
         context['table_data'] = sorted(table_data, key=row_key)
         return context
 
@@ -69,75 +70,80 @@ class SchemaCreate(generic.FormView):
 
     def post(self, request):
         content_type = ContentType.objects.get(pk=request.POST['content_type'])
-        org = None
-        if request.POST['organization']:
-            org = Organization.objects.get(pk=request.POST['organization'])
-        project = None
-        if request.POST['project']:
-            project = Project.objects.get(pk=request.POST['project'])
+        div = None
+        if request.POST['division']:
+            div = Division.objects.get(pk=request.POST['division'])
+        dept = None
+        if request.POST['department']:
+            dept = Department.objects.get(pk=request.POST['department'])
         with transaction.atomic():
             schema = Schema.objects.create(content_type=content_type)
             SchemaSelector.objects.create(
-                schema=schema, index=1, content_type=org_t,
-                object_id=org.pk if org else None
+                schema=schema, index=1, content_type=div_t,
+                object_id=div.pk if div else None
             )
             SchemaSelector.objects.create(
-                schema=schema, index=2, content_type=proj_t,
-                object_id=project.pk if project else None
+                schema=schema, index=2, content_type=dept_t,
+                object_id=dept.pk if dept else None
             )
         return redirect(self.success_url)
 
 
+class SchemaDelete(edit.DeleteView):
+    model = Schema
+    success_url = reverse_lazy('schema-list')
+
+
 # ----------------------------------------------------------------------
 #
-#  ORGANIZATIONS
+#  DIVISIONS
 #
 
-class OrganizationList(generic.ListView):
-    model = Organization
+class DivisionList(generic.ListView):
+    model = Division
 
 
-class OrganizationCreate(edit.CreateView):
-    model = Organization
+class DivisionCreate(edit.CreateView):
+    model = Division
     fields = ('name',)
-    success_url = reverse_lazy('organization-list')
+    success_url = reverse_lazy('division-list')
 
 
-class OrganizationDelete(edit.DeleteView):
-    model = Organization
-    success_url = reverse_lazy('organization-list')
+class DivisionDelete(edit.DeleteView):
+    model = Division
+    success_url = reverse_lazy('division-list')
 
 
 # ----------------------------------------------------------------------
 #
-#  PROJECTS
+#  DEPARTMENTS
 #
 
-class ProjectList(generic.ListView):
-    model = Project
+class DepartmentList(generic.ListView):
+    model = Department
 
 
-class ProjectForm(ModelForm):
+class DepartmentForm(ModelForm):
     class Meta:
-        model = Project
-        fields = ('name', 'organization')
+        model = Department
+        fields = ('name', 'division')
 
     def __init__(self, *args, **kwargs):
-        super(ProjectForm, self).__init__(*args, **kwargs)
-        self.fields['organization'] = ModelChoiceField(
-            queryset=Organization.objects.all(), empty_label=None
+        super(DepartmentForm, self).__init__(*args, **kwargs)
+        self.fields['division'] = ModelChoiceField(
+            queryset=Division.objects.all(), empty_label=None
         )
 
 
-class ProjectCreate(edit.CreateView):
-    model = Project
-    form_class = ProjectForm
-    success_url = reverse_lazy('project-list')
+class DepartmentCreate(edit.CreateView):
+    model = Department
+    form_class = DepartmentForm
+    success_url = reverse_lazy('department-list')
 
 
-class ProjectDelete(edit.DeleteView):
-    model = Project
-    success_url = reverse_lazy('project-list')
+class DepartmentDelete(edit.DeleteView):
+    model = Department
+    success_url = reverse_lazy('department-list')
 
 
 # ----------------------------------------------------------------------
@@ -156,12 +162,12 @@ class PartyDetail(generic.DetailView):
 class PartyForm(ModelForm):
     class Meta:
         model = Party
-        fields = ('name', 'project')
+        fields = ('name', 'department')
 
     def __init__(self, *args, **kwargs):
         super(PartyForm, self).__init__(*args, **kwargs)
-        self.fields['project'] = ModelChoiceField(
-            queryset=Project.objects.all(), empty_label=None
+        self.fields['department'] = ModelChoiceField(
+            queryset=Department.objects.all(), empty_label=None
         )
 
 
@@ -183,40 +189,40 @@ class PartyDelete(edit.DeleteView):
 
 # ----------------------------------------------------------------------
 #
-#  PARCELS
+#  CONTRACTS
 #
 
-class ParcelList(generic.ListView):
-    model = Parcel
+class ContractList(generic.ListView):
+    model = Contract
 
 
-class ParcelDetail(generic.DetailView):
-    model = Parcel
+class ContractDetail(generic.DetailView):
+    model = Contract
 
 
-class ParcelForm(ModelForm):
+class ContractForm(ModelForm):
     class Meta:
-        model = Parcel
-        fields = ('address', 'project')
+        model = Contract
+        fields = ('department',)
 
     def __init__(self, *args, **kwargs):
-        super(ParcelForm, self).__init__(*args, **kwargs)
-        self.fields['project'] = ModelChoiceField(
-            queryset=Project.objects.all(), empty_label=None
+        super(ContractForm, self).__init__(*args, **kwargs)
+        self.fields['department'] = ModelChoiceField(
+            queryset=Department.objects.all(), empty_label=None
         )
 
 
-class ParcelCreate(edit.CreateView):
-    model = Parcel
-    form_class = ParcelForm
+class ContractCreate(edit.CreateView):
+    model = Contract
+    form_class = ContractForm
 
 
-class ParcelUpdate(edit.UpdateView):
-    model = Parcel
-    form_class = ParcelForm
+class ContractUpdate(edit.UpdateView):
+    model = Contract
+    form_class = ContractForm
     template_name_suffix = '_update_form'
 
 
-class ParcelDelete(edit.DeleteView):
-    model = Parcel
-    success_url = reverse_lazy('parcel-list')
+class ContractDelete(edit.DeleteView):
+    model = Contract
+    success_url = reverse_lazy('contract-list')

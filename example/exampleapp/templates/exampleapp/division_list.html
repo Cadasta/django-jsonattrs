@@ -1,0 +1,20 @@
+{% extends "exampleapp/base.html" %}
+
+{% block title %}Division list{% endblock %}
+
+{% block back %}
+<a href="{% url 'index' %}">Back to index</a>
+<hr>
+{% endblock %}
+
+{% block content %}
+<ul>
+  {% for div in object_list %}
+    <li>
+      {{ div.name }} [<a href="{% url 'division-delete' org.pk %}">Delete</a>]
+    </a></li>
+  {% endfor %}
+</ul>
+
+<a href="{% url 'division-add' %}">Create new division</a>
+{% endblock %}

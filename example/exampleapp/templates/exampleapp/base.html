@@ -3,7 +3,8 @@
   <head>
     <title>jsonattrs example app</title>
     <style>
-     .messages {
+     ul.errorlist {
+       list-style: none;
        border: 2px solid red;
        padding: 0px 10px;
        color: #AA0000;
@@ -36,5 +37,7 @@
 
       {% block content %}{% endblock %}
     </div>
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+    {% block extra_script %}{% endblock %}
   </body>
 </html>

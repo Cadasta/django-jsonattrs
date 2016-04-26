@@ -1,4 +1,5 @@
 from django import forms
+from django.forms.widgets import HiddenInput
 from django.contrib.contenttypes.models import ContentType
 
 from jsonattrs.models import Schema, Attribute
@@ -10,6 +11,7 @@ AttributeFormSet = forms.inlineformset_factory(
     Schema, Attribute,
     fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
             'choices', 'default', 'required', 'omit'),
+    widgets={'index': HiddenInput(), 'DELETE': HiddenInput()},
     extra=3
 )
 

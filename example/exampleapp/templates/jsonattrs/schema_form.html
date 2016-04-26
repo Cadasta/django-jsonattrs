@@ -20,26 +20,72 @@
     {% for form in formset.forms %}
     {% if forloop.first %}
     <thead><tr>
-      {% for field in form.visible_fields %}
-      <th>{{ field.label|capfirst }}</th>
-      {% endfor %}
+      <th>Name</th>
+      <th>Long name</th>
+      <th>Type</th>
+      <th>Subtype</th>
+      <th>Choices</th>
+      <th>Default</th>
+      <th>Required</th>
+      <th>Omit</th>
+      <th></th>
     </tr></thead>
     {% endif %}
-    <tr class="{% cycle row1,row2 %}">
-      {% for field in form.visible_fields %}
+    <tr>
       <td>
-        {% if forloop.first %}
-        {% for hidden in form.hidden_fields %}
-        {{ hidden }}
-        {% endfor %}
-        {% endif %}
-        {{ field.errors.as_ul }}
-        {{ field }}
+        <input id="{{ form.DELETE.id_for_label }}"
+               type="checkbox" hidden="true"
+               name="{{ form.DELETE.html_name }}">
+        {{ form.index }}
+        {{ form.name.errors.as_ul }}
+        {{ form.name }}
       </td>
-      {% endfor %}
+      <td>
+        {{ form.long_name.errors.as_ul }}
+        {{ form.long_name }}
+      </td>
+      <td>
+        {{ form.coarse_type.errors.as_ul }}
+        {{ form.coarse_type }}
+      </td>
+      <td>
+        {{ form.subtype.errors.as_ul }}
+        {{ form.subtype }}
+      </td>
+      <td>
+        {{ form.choices.errors.as_ul }}
+        {{ form.choices }}
+      </td>
+      <td>
+        {{ form.default.errors.as_ul }}
+        {{ form.default }}
+      </td>
+      <td>
+        {{ form.required.errors.as_ul }}
+        {{ form.required }}
+      </td>
+      <td>
+        {{ form.omit.errors.as_ul }}
+        {{ form.omit }}
+      </td>
+      <td>
+        <button type="button" class="row-up">
+          <strong>&uArr;</strong>
+        </button>
+        <button type="button" class="row-down">
+          <strong>&dArr;</strong>
+        </button>
+        <button type="button" class="row-del">
+          <strong>X</strong>
+        </button>
+      </td>
     </tr>
     {% endfor %}
   </table>
+
+  <button type="button" class="row-add">
+    Add field
+  </button>
 
   <br>
   <br>
@@ -49,4 +95,24 @@
   </a>
 </form>
 
+{% endblock %}
+
+
+{% block extra_script %}
+<script>
+ $(document).ready(function() {
+   function field(name, formidx) { return 'id_attributes-' + form + '-' + name; }
+   var nforms = $('#id_attributes-TOTAL_FORMS').attr('value');
+   console.log('nforms =', nforms);
+   $('.row-del').click(function(event) {
+     var row = $(event.target).parent().parent()[0];
+     var del = $($(row).children()[0]).children()[0];
+     if (nforms > 1) {
+       $(row).hide();
+       $(del).val(true);
+       nforms--;
+     }
+   })
+ });
+</script>
 {% endblock %}

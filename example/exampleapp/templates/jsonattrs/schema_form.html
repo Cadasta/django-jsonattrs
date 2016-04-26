@@ -19,71 +19,75 @@
   <table id="formset" class="form">
     {% for form in formset.forms %}
     {% if forloop.first %}
-    <thead><tr>
-      <th>Name</th>
-      <th>Long name</th>
-      <th>Type</th>
-      <th>Subtype</th>
-      <th>Choices</th>
-      <th>Default</th>
-      <th>Required</th>
-      <th>Omit</th>
-      <th></th>
-    </tr></thead>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Long name</th>
+        <th>Type</th>
+        <th>Subtype</th>
+        <th>Choices</th>
+        <th>Default</th>
+        <th>Required</th>
+        <th>Omit</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="rows">
     {% endif %}
-    <tr>
-      <td>
-        <input id="{{ form.DELETE.id_for_label }}"
-               type="checkbox" hidden="true"
-               name="{{ form.DELETE.html_name }}">
-        {{ form.index }}
-        {{ form.name.errors.as_ul }}
-        {{ form.name }}
-      </td>
-      <td>
-        {{ form.long_name.errors.as_ul }}
-        {{ form.long_name }}
-      </td>
-      <td>
-        {{ form.coarse_type.errors.as_ul }}
-        {{ form.coarse_type }}
-      </td>
-      <td>
-        {{ form.subtype.errors.as_ul }}
-        {{ form.subtype }}
-      </td>
-      <td>
-        {{ form.choices.errors.as_ul }}
-        {{ form.choices }}
-      </td>
-      <td>
-        {{ form.default.errors.as_ul }}
-        {{ form.default }}
-      </td>
-      <td>
-        {{ form.required.errors.as_ul }}
-        {{ form.required }}
-      </td>
-      <td>
-        {{ form.omit.errors.as_ul }}
-        {{ form.omit }}
-      </td>
-      <td>
-        <button type="button" class="row-up">
-          <strong>&uArr;</strong>
-        </button>
-        <button type="button" class="row-down">
-          <strong>&dArr;</strong>
-        </button>
-        <button type="button" class="row-del">
-          <strong>X</strong>
-        </button>
-      </td>
-    </tr>
-    {% endfor %}
+      <tr>
+        <td>
+          <input id="{{ form.DELETE.id_for_label }}"
+                 type="checkbox" hidden="true"
+                 name="{{ form.DELETE.html_name }}">
+          {{ form.index }}
+          {{ form.name.errors.as_ul }}
+          {{ form.name }}
+        </td>
+        <td>
+          {{ form.long_name.errors.as_ul }}
+          {{ form.long_name }}
+        </td>
+        <td>
+          {{ form.coarse_type.errors.as_ul }}
+          {{ form.coarse_type }}
+        </td>
+        <td>
+          {{ form.subtype.errors.as_ul }}
+          {{ form.subtype }}
+        </td>
+        <td>
+          {{ form.choices.errors.as_ul }}
+          {{ form.choices }}
+        </td>
+        <td>
+          {{ form.default.errors.as_ul }}
+          {{ form.default }}
+        </td>
+        <td>
+          {{ form.required.errors.as_ul }}
+          {{ form.required }}
+        </td>
+        <td>
+          {{ form.omit.errors.as_ul }}
+          {{ form.omit }}
+        </td>
+        <td>
+          <button type="button" class="row-up">
+            <strong>&uArr;</strong>
+          </button>
+          <button type="button" class="row-down">
+            <strong>&dArr;</strong>
+          </button>
+          <button type="button" class="row-del">
+            <strong>X</strong>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 
-  <button type="button" class="row-add">
+  <button type="button" id="row-add">
     Add field
   </button>
 
@@ -102,9 +106,9 @@
 <script>
  $(document).ready(function() {
    function field(name, formidx) { return 'id_attributes-' + form + '-' + name; }
+   var rows = $('#rows');
    var nforms = $('#id_attributes-TOTAL_FORMS').attr('value');
-   console.log('nforms =', nforms);
-   $('.row-del').click(function(event) {
+   function del_row(event) {
      var row = $(event.target).parent().parent()[0];
      var del = $($(row).children()[0]).children()[0];
      if (nforms > 1) {
@@ -112,7 +116,26 @@
        $(del).val(true);
        nforms--;
      }
-   })
+   }
+   $('.row-del').click(del_row);
+
+   $('#row-add').click(function(event) {
+     console.log('Add row');
+     var new_row = $($(rows).children()[0]).clone();
+     var repl = '-' + nforms + '-';
+     new_row.children().each(function() {
+       $(this).children().each(function() {
+         if ($(this).attr('id') && $(this).attr('id'))
+           $(this).attr('id', $(this).attr('id').replace('-0-', repl));
+         if ($(this).attr('name') && $(this).attr('name'))
+           $(this).attr('name', $(this).attr('name').replace('-0-', repl));
+       });
+     });
+     $(rows).append(new_row);
+     new_row.find('.row-del').click(del_row);
+     ++nforms;
+     $('#id_attributes-TOTAL_FORMS').attr('value', nforms);
+   });
  });
 </script>
 {% endblock %}

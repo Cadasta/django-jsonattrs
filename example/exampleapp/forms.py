@@ -1,23 +1,17 @@
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 
-from jsonattrs.models import FIELD_TYPE_CHOICES
+from jsonattrs.models import Schema, Attribute
 
 from .models import Division, Department
 
 
-class AttributeForm(forms.Form):
-    name = forms.CharField(max_length=50)
-    long_name = forms.CharField(max_length=50, required=False)
-    coarse_type = forms.ChoiceField(choices=FIELD_TYPE_CHOICES)
-    subtype = forms.CharField(max_length=255, required=False)
-    order = forms.IntegerField()
-    unique_together = forms.BooleanField()
-    unique = forms.BooleanField()
-    choices = forms.CharField(max_length=200, required=False)
-    default = forms.CharField(max_length=50, required=False)
-    required = forms.BooleanField()
-    omit = forms.BooleanField()
+AttributeFormSet = forms.inlineformset_factory(
+    Schema, Attribute,
+    fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
+            'choices', 'default', 'required', 'omit'),
+    extra=3
+)
 
 
 class SchemaForm(forms.Form):
@@ -31,3 +25,17 @@ class SchemaForm(forms.Form):
     department = forms.ModelChoiceField(
         queryset=Department.objects.all(), empty_label='*', required=False
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        content_type = cleaned_data.get('content_type')
+        division = cleaned_data.get('division')
+        department = cleaned_data.get('department')
+        check = ()
+        if division is not None:
+            division = Division.objects.get(name=division)
+            check = (division,)
+            if department is not None:
+                department = Department.objects.get(name=department)
+                check = (division, department)
+        Schema.check_unique_together(content_type, check)

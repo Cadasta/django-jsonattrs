@@ -45,36 +45,30 @@ class Schema(models.Model):
     def __repr__(self):
         return str(self)
 
-    def validate_unique(self, *args, **kwargs):
-        """Need to maintain the unique together constraint across
-        schema.content_type and [sel.selector for sel in
-        schema.selectors.all()].
+    @classmethod
+    def check_unique_together(cls, content_type, check, exclude=None):
+        """Check "unique together" constraint across schema.content_type and
+        [sel.selector for sel in schema.selectors.all()].
 
         """
 
         # Find possible matching schemata based on content type
         # (excluding the schema being validated).
         schemata = Schema.objects.filter(
-            content_type=self.content_type
-        ).exclude(pk=self.pk)
+            content_type=content_type
+        )
+        if exclude is not None:
+            schemata = schemata.exclude(pk=exclude)
 
-        # Retrieve schema selectors for these schemata, grouping by
-        # schema (they'll be returned in index order).
-        selectors_tmp = [
-            tuple(g[1]) for g
-            in groupby(SchemaSelector.objects.filter(schema__in=schemata),
-                       lambda ss: ss.schema)
-        ]
-
-        # Make a list of tuples of selector objects for each schema
-        # for us to match against the selector objects of the schema
-        # being validated.
-        selectors = list(map(lambda ss: tuple(s.selector for s in ss),
-                             selectors_tmp))
-
-        # Make a tuple of selector objects for the schema being
-        # validated.
-        check = tuple(s.selector for s in self.selectors.all())
+        # Retrieve selector objects from schema selectors for these
+        # schemata, grouping by schema (they'll be returned in index
+        # order).
+        sels = SchemaSelector.objects.filter(schema__in=schemata)
+        selectors = []
+        for schema in schemata:
+            tmp = tuple(map(lambda ss: ss.selector,
+                            filter(lambda ss: ss.schema == schema, sels)))
+            selectors.append(tmp)
 
         # If the selector object tuple for the schema being validated
         # occurs in the list of selector object tuples retrieved for
@@ -86,6 +80,13 @@ class Schema(models.Model):
                 message="Non-unique schema selectors in jsonattrs",
                 code='unique_together'
             )
+
+    def validate_unique(self, *args, **kwargs):
+        # Make a tuple of selector objects for the schema being
+        # validated.
+        check = tuple(s.selector for s in self.selectors.all())
+
+        self.check_unique_together(self.content_type, check, exclude=self.pk)
 
     objects = SchemaManager()
 
@@ -115,14 +116,12 @@ FIELD_TYPE_CHOICES = [(field, field) for field in FIELD_TYPES]
 
 
 class Attribute(models.Model):
+    schema = models.ForeignKey(Schema, related_name='attributes')
     name = models.CharField(max_length=50)
     long_name = models.CharField(max_length=50, blank=True)
-    schema = models.ForeignKey(Schema, related_name='attributes')
     coarse_type = models.CharField(max_length=255, choices=FIELD_TYPE_CHOICES)
     subtype = models.CharField(max_length=255, blank=True)
     index = models.IntegerField()
-    unique_together = models.BooleanField()
-    unique = models.BooleanField()
     choices = models.CharField(max_length=200, blank=True)
     default = models.CharField(max_length=50, blank=True)
     required = models.BooleanField(default=False)

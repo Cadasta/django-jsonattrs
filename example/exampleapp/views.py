@@ -10,7 +10,7 @@ from django.db.utils import OperationalError
 from jsonattrs.models import Schema, SchemaSelector
 
 from .models import Division, Department, Party, Contract
-from .forms import SchemaForm
+from .forms import SchemaForm, AttributeFormSet
 
 
 try:
@@ -72,6 +72,11 @@ class SchemaCreate(generic.FormView):
     template_name = 'jsonattrs/schema_form.html'
     success_url = reverse_lazy('schema-list')
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['formset'] = AttributeFormSet()
+        return context
+
     def post(self, request):
         content_type = ContentType.objects.get(pk=request.POST['content_type'])
         div = None
@@ -80,17 +85,29 @@ class SchemaCreate(generic.FormView):
         dept = None
         if request.POST['department']:
             dept = Department.objects.get(pk=request.POST['department'])
-        with transaction.atomic():
-            schema = Schema.objects.create(content_type=content_type)
-            SchemaSelector.objects.create(
-                schema=schema, index=1, content_type=div_t,
-                object_id=div.pk if div else None
-            )
-            SchemaSelector.objects.create(
-                schema=schema, index=2, content_type=dept_t,
-                object_id=dept.pk if dept else None
-            )
-        return redirect(self.success_url)
+        try:
+            with transaction.atomic():
+                schema = Schema.objects.create(content_type=content_type)
+                if div is not None:
+                    SchemaSelector.objects.create(
+                        schema=schema, index=1,
+                        content_type=div_t, object_id=div.pk
+                    )
+                if dept is not None:
+                    SchemaSelector.objects.create(
+                        schema=schema, index=2,
+                        content_type=dept_t, object_id=dept.pk
+                    )
+                formset = AttributeFormSet(request.POST, request.FILES,
+                                           instance=schema)
+                if not self.get_form().is_valid() or not formset.is_valid():
+                    raise transaction.IntegrityError
+                formset.save()
+                schema.save()
+        except:
+            return self.form_invalid(self.get_form())
+        else:
+            return redirect(self.success_url)
 
 
 class SchemaDelete(edit.DeleteView):

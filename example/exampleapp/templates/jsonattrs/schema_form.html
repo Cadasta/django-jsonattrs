@@ -10,9 +10,43 @@
 {% block content %}
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
+
+  <br>
+  <h3>Attributes</h3>
+
+  {{ formset.management_form }}
+  {{ formset.non_form_errors.as_ul }}
+  <table id="formset" class="form">
+    {% for form in formset.forms %}
+    {% if forloop.first %}
+    <thead><tr>
+      {% for field in form.visible_fields %}
+      <th>{{ field.label|capfirst }}</th>
+      {% endfor %}
+    </tr></thead>
+    {% endif %}
+    <tr class="{% cycle row1,row2 %}">
+      {% for field in form.visible_fields %}
+      <td>
+        {% if forloop.first %}
+        {% for hidden in form.hidden_fields %}
+        {{ hidden }}
+        {% endfor %}
+        {% endif %}
+        {{ field.errors.as_ul }}
+        {{ field }}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+
+  <br>
+  <br>
   <input type="submit" value="Create" />
   <a href="{% url 'schema-list' %}">
     <input type="button" value="Cancel" />
   </a>
 </form>
+
 {% endblock %}

@@ -7,13 +7,14 @@ from jsonattrs.models import Schema, Attribute
 from .models import Division, Department
 
 
-AttributeFormSet = forms.inlineformset_factory(
-    Schema, Attribute,
-    fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
-            'choices', 'default', 'required', 'omit'),
-    widgets={'index': HiddenInput(), 'DELETE': HiddenInput()},
-    extra=3
-)
+def attribute_formset_factory(*args, **kwargs):
+    return forms.inlineformset_factory(
+        Schema, Attribute,
+        fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
+                'choices', 'default', 'required', 'omit'),
+        widgets={'index': HiddenInput(), 'DELETE': HiddenInput()},
+        *args, **kwargs
+    )
 
 
 class SchemaForm(forms.Form):
@@ -33,6 +34,10 @@ class SchemaForm(forms.Form):
         content_type = cleaned_data.get('content_type')
         division = cleaned_data.get('division')
         department = cleaned_data.get('department')
+        print('SchemaForm: clean')
+        print('  content_type =', content_type)
+        print('  division =', division)
+        print('  department =', department)
         check = ()
         if division is not None:
             division = Division.objects.get(name=division)

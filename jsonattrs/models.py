@@ -10,6 +10,9 @@ from .settings import FIELD_TYPES
 
 class SchemaManager(models.Manager):
     def create(self, content_type, selectors=()):
+        print('SchemaManager: create')
+        print('   content_type =', content_type)
+        print('   selectors =', selectors)
         schema = super().create(content_type=content_type)
         for selector, index in zip(selectors, count(1)):
             SchemaSelector.objects.create(
@@ -40,7 +43,10 @@ class Schema(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
 
     def __str__(self):
-        return '<Schema #{}: {}>'.format(self.id, self.content_type)
+        return '<Schema #{}: {}>'.format(
+            self.id,
+            self.content_type if self.content_type_id is not None else 'None'
+        )
 
     def __repr__(self):
         return str(self)
@@ -51,6 +57,9 @@ class Schema(models.Model):
         [sel.selector for sel in schema.selectors.all()].
 
         """
+
+        if check == ():
+            raise ValueError('OOPS')
 
         # Find possible matching schemata based on content type
         # (excluding the schema being validated).

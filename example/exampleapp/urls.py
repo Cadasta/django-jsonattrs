@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from .views import (
     IndexView,
-    SchemaList, SchemaCreate, SchemaDelete,
+    SchemaList, SchemaCreate, SchemaUpdate, SchemaDelete,
     DivisionList, DivisionCreate, DivisionDelete,
     DepartmentList, DepartmentCreate, DepartmentDelete,
     PartyList, PartyDetail, PartyCreate, PartyUpdate, PartyDelete,
@@ -14,6 +14,8 @@ urlpatterns = [
 
     url(r'^schema/$', SchemaList.as_view(),
         name='schema-list'),
+    url(r'^schema/(?P<pk>\d+)/$', SchemaUpdate.as_view(),
+        name='schema-detail'),
     url(r'^schema/add/$', SchemaCreate.as_view(),
         name='schema-add'),
     url(r'^schema/(?P<pk>\d+)/delete/$', SchemaDelete.as_view(),

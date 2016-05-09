@@ -1,7 +1,5 @@
 {% extends "exampleapp/base.html" %}
 
-{% block title %}Create schema{% endblock %}
-
 {% block back %}
 <a href="{% url 'schema-list' %}">Back to schema list</a>
 <hr>
@@ -75,7 +73,7 @@
           <button type="button" class="row-up">
             <strong>&uArr;</strong>
           </button>
-          <button type="button" class="row-down">
+          <button type="button" class="row-dn">
             <strong>&dArr;</strong>
           </button>
           <button type="button" class="row-del">
@@ -93,7 +91,7 @@
 
   <br>
   <br>
-  <input type="submit" value="Create" />
+  {% block submit_button %}{% endblock %}
   <a href="{% url 'schema-list' %}">
     <input type="button" value="Cancel" />
   </a>
@@ -105,37 +103,107 @@
 {% block extra_script %}
 <script>
  $(document).ready(function() {
-   function field(name, formidx) { return 'id_attributes-' + form + '-' + name; }
-   var rows = $('#rows');
-   var nforms = $('#id_attributes-TOTAL_FORMS').attr('value');
-   function del_row(event) {
-     var row = $(event.target).parent().parent()[0];
-     var del = $($(row).children()[0]).children()[0];
-     if (nforms > 1) {
-       $(row).hide();
-       $(del).val(true);
-       nforms--;
-     }
-   }
-   $('.row-del').click(del_row);
+   // Need to set index fields here.
 
-   $('#row-add').click(function(event) {
-     console.log('Add row');
-     var new_row = $($(rows).children()[0]).clone();
-     var repl = '-' + nforms + '-';
-     new_row.children().each(function() {
-       $(this).children().each(function() {
-         if ($(this).attr('id') && $(this).attr('id'))
-           $(this).attr('id', $(this).attr('id').replace('-0-', repl));
-         if ($(this).attr('name') && $(this).attr('name'))
-           $(this).attr('name', $(this).attr('name').replace('-0-', repl));
+   function nforms() { return Number($('#id_attributes-TOTAL_FORMS').attr('value')); }
+   function field(name, idx) { return '#id_attributes-' + idx + '-' + name; }
+   var fields = {"DELETE": "checkbox",
+                 "index": "hidden",
+                 "name": "text",
+                 "long_name": "text",
+                 "coarse_type": "select",
+                 "subtype": "text",
+                 "choices": "text",
+                 "default": "text",
+                 "required": "checkbox",
+                 "omit": "checkbox"};
+
+   var rows = $('#rows');
+   var orig = nforms(), live = orig, deleted = 0;
+
+   function renumber() {
+     rows.children().each(function(rowidx) {
+       $(this).find('input,select').each(function() {
+         var fld = $(this).attr('id').replace(/id_attributes-.*-/, '');
+         var newid = 'id_attributes-' + rowidx + '-' + fld;
+         $(this).attr('id', newid);
+         $(this).attr('name', newid);
+         if (fld == 'index')
+           $(this).val(rowidx + 1);
        });
      });
-     $(rows).append(new_row);
-     new_row.find('.row-del').click(del_row);
-     ++nforms;
-     $('#id_attributes-TOTAL_FORMS').attr('value', nforms);
-   });
+   }
+
+   function delta_forms(dlive, ddeleted) {
+     console.log('DELTA: dlive=' + dlive + '  ddeleted=' + ddeleted);
+     console.log('  Before: live=' + live + '  deleted=' + deleted);
+     live += dlive;
+     deleted += ddeleted;
+     console.log('  After: live=' + live + '  deleted=' + deleted);
+     $('#id_attributes-TOTAL_FORMS').attr('value', live + deleted);
+     renumber();
+   }
+
+   function del_row(event) {
+     console.log('orig=' + orig + '  live=' + live + '  deleted=' + deleted);
+     if (live > 0) {
+       var row = $(this).parent().parent()[0];
+       var del = $($(row).children()[0]).children()[0];
+       if (live > orig) {
+         $(row).remove();
+         delta_forms(-1, 0);
+       } else {
+         $(del).val(true);
+         $(rows).append(row);
+         $(row).hide();
+         delta_forms(-1, 1);
+       }
+     }
+   }
+
+   function add_row(event) {
+     var new_row;
+     var ddeleted = 0;
+     if (deleted > 0) {
+       new_row = $($(rows).children()[live]);
+       new_row.find(field('DELETE', live)).val(false);
+       new_row.show();
+       ddeleted = -1;
+     } else {
+       new_row = $($(rows).children()[0]).clone();
+       new_row.find('input,select').each(function() {
+         var fld = $(this).attr('id').replace(/id_attributes-.*-/, '');
+         switch (fields[fld]) {
+           case 'checkbox':
+             $(this).prop('checked', false);
+             break;
+
+           case 'text':
+             $(this).val('');
+             break;
+
+           case 'select':
+             break;
+         }
+       });
+       $(rows).append(new_row);
+       new_row.show();
+       new_row.find('.row-del').click(del_row);
+     }
+     delta_forms(1, ddeleted);
+   }
+
+   function move_row(event, offset) {
+     var row = $(this).parent().parent()[0];
+   }
+   function up_row(event) { move_row(event, -1); }
+   function dn_row(event) { move_row(event, 1); }
+
+   $('.row-del').click(del_row);
+   $('.row-up').click(up_row);
+   $('.row-dn').click(dn_row);
+   $('#row-add').click(add_row);
+   renumber();
  });
 </script>
 {% endblock %}

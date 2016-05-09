@@ -19,7 +19,7 @@
   </thead>
   {% for row in table_data %}
   <tr>
-    <td>{{ row.content_type }}</td>
+    <td><a href="{% url 'schema-detail' row.schema.pk %}">{{ row.content_type }}</a></td>
     <td>{{ row.division|default_if_none:"&mdash;" }}</td>
     <td>{{ row.department|default_if_none:"&mdash;" }}</td>
     <td><a href="{% url 'schema-delete' row.schema.pk %}">Delete</a></td>

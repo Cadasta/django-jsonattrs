@@ -58,9 +58,6 @@ class Schema(models.Model):
 
         """
 
-        if check == ():
-            raise ValueError('OOPS')
-
         # Find possible matching schemata based on content type
         # (excluding the schema being validated).
         schemata = Schema.objects.filter(

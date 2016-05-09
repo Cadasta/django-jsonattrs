@@ -135,17 +135,13 @@
    }
 
    function delta_forms(dlive, ddeleted) {
-     console.log('DELTA: dlive=' + dlive + '  ddeleted=' + ddeleted);
-     console.log('  Before: live=' + live + '  deleted=' + deleted);
      live += dlive;
      deleted += ddeleted;
-     console.log('  After: live=' + live + '  deleted=' + deleted);
      $('#id_attributes-TOTAL_FORMS').attr('value', live + deleted);
      renumber();
    }
 
    function del_row(event) {
-     console.log('orig=' + orig + '  live=' + live + '  deleted=' + deleted);
      if (live > 0) {
        var row = $(this).parent().parent()[0];
        var del = $($(row).children()[0]).children()[0];
@@ -189,15 +185,28 @@
        $(rows).append(new_row);
        new_row.show();
        new_row.find('.row-del').click(del_row);
+       new_row.find('.row-up').click(up_row);
+       new_row.find('.row-dn').click(dn_row);
      }
      delta_forms(1, ddeleted);
    }
 
-   function move_row(event, offset) {
+   function move_row(offset) {
      var row = $(this).parent().parent()[0];
+     var index = Number(
+       $(row).find('input[id*=index]').attr('id').
+              replace(/id_attributes-/, '').replace('-index', '')
+     );
+     if (index + offset < 0 || index + offset >= live)
+       return;
+     else if (offset == -1)
+       $(row).prev().before(row);
+     else
+       $(row).next().after(row);
+     renumber();
    }
-   function up_row(event) { move_row(event, -1); }
-   function dn_row(event) { move_row(event, 1); }
+   function up_row() { move_row.bind(this)(-1); }
+   function dn_row() { move_row.bind(this)(1); }
 
    $('.row-del').click(del_row);
    $('.row-up').click(up_row);

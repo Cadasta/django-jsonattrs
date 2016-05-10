@@ -10,7 +10,7 @@ from django.db.utils import OperationalError
 from jsonattrs.models import Schema
 
 from .models import Division, Department, Party, Contract
-from .forms import SchemaForm, attribute_formset_factory
+from .forms import SchemaForm, AttributeFormSet
 
 
 try:
@@ -67,16 +67,25 @@ class SchemaList(generic.ListView):
 
 
 class SchemaMixin:
-    model = Schema
     form_class = SchemaForm
+
+    def get_initial(self):
+        obj = self.get_object()
+        if obj is not None:
+            sels = obj.selectors.all()
+            return {'content_type': obj.content_type,
+                    'division': sels[0].selector if len(sels) > 0 else None,
+                    'department': sels[1].selector if len(sels) > 1 else None}
+        else:
+            return {}
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        extra = 0
-        if (self.get_object() is None or
-           self.get_object().attributes.count() == 0):
-            extra = 1
-        context['formset'] = attribute_formset_factory(extra=extra)
+        if self.get_object() is not None:
+            print('AttributeFormSet for', self.get_object())
+            context['formset'] = AttributeFormSet(instance=self.get_object())
+        else:
+            context['formset'] = AttributeFormSet()
         return context
 
     def form_valid(self, form):
@@ -110,24 +119,23 @@ class SchemaCreate(SchemaMixin, generic.FormView):
     success_url = reverse_lazy('schema-list')
 
     def get_object(self):
-        print('SchemaCreate: get_object')
-        return None
+        return self.schema if hasattr(self, 'schema') else None
 
     def process(self, request, content_type, selectors):
         print('SchemaCreate: process')
         print('  content_type =', content_type)
         print('  selectors =', selectors)
         with transaction.atomic():
-            schema = Schema.objects.create(
+            self.schema = Schema.objects.create(
                 content_type=content_type, selectors=selectors
             )
-            formset = attribute_formset_factory(
-                request.POST, request.FILES, instance=schema
-            )
+            formset = AttributeFormSet(request.POST, request.FILES,
+                                       instance=self.schema)
             if not formset.is_valid():
                 print('Formset is bad')
-                print(formset)
+                print(formset.errors)
                 raise transaction.IntegrityError
+            print('Formset OK')
             formset.save()
 
 
@@ -135,15 +143,17 @@ class SchemaUpdate(SchemaMixin, generic.FormView):
     template_name = 'jsonattrs/schema_update_form.html'
     success_url = reverse_lazy('schema-list')
 
+    def get_object(self):
+        print('SchemaUpdate: get_object')
+        return Schema.objects.get(pk=self.kwargs['pk'])
+
     def process(self, request, content_type, selectors):
         with transaction.atomic():
             schema = self.instance  # ???
             schema.content_type = content_type
             schema.selectors = selectors
             schema.save()
-            formset = attribute_formset_factory(
-                request.POST, request.FILES, instance=schema
-            )
+            formset = AttributeFormSet(request.POST, request.FILES)
             if not formset.is_valid():
                 print('Formset is bad')
                 print(formset)

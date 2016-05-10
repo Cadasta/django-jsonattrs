@@ -1,5 +1,6 @@
 from django import forms
 from django.forms.widgets import HiddenInput
+from django.forms.models import inlineformset_factory
 from django.contrib.contenttypes.models import ContentType
 
 from jsonattrs.models import Schema, Attribute
@@ -7,14 +8,20 @@ from jsonattrs.models import Schema, Attribute
 from .models import Division, Department
 
 
-def attribute_formset_factory(*args, **kwargs):
-    return forms.inlineformset_factory(
-        Schema, Attribute,
-        fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
-                'choices', 'default', 'required', 'omit'),
-        widgets={'index': HiddenInput(), 'DELETE': HiddenInput()},
-        *args, **kwargs
-    )
+class AttributeInlineFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        print('AttributeInlineFormSet.clean')
+        print(self)
+        print(self.data)
+        super().clean()
+
+
+AttributeFormSet = inlineformset_factory(
+    Schema, Attribute, formset=AttributeInlineFormSet,
+    fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
+            'choices', 'default', 'required', 'omit'),
+    widgets={'index': HiddenInput(), 'DELETE': HiddenInput()}
+)
 
 
 class SchemaForm(forms.Form):
@@ -45,4 +52,5 @@ class SchemaForm(forms.Form):
             if department is not None:
                 department = Department.objects.get(name=department)
                 check = (division, department)
+        print('Calling Schema.check_unique_together: check =', check)
         Schema.check_unique_together(content_type, check)

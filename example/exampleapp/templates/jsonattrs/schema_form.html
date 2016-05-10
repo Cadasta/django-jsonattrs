@@ -125,9 +125,8 @@
      rows.children().each(function(rowidx) {
        $(this).find('input,select').each(function() {
          var fld = $(this).attr('id').replace(/id_attributes-.*-/, '');
-         var newid = 'id_attributes-' + rowidx + '-' + fld;
-         $(this).attr('id', newid);
-         $(this).attr('name', newid);
+         $(this).attr('id', 'id_attributes-' + rowidx + '-' + fld);
+         $(this).attr('name', 'attributes-' + rowidx + '-' + fld);
          if (fld == 'index')
            $(this).val(rowidx + 1);
        });
@@ -149,7 +148,7 @@
          $(row).remove();
          delta_forms(-1, 0);
        } else {
-         $(del).val(true);
+         $(del).prop('checked', true);
          $(rows).append(row);
          $(row).hide();
          delta_forms(-1, 1);

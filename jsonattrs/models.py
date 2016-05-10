@@ -58,6 +58,8 @@ class Schema(models.Model):
 
         """
 
+        print('Schema.check_unique_together: check =', check)
+
         # Find possible matching schemata based on content type
         # (excluding the schema being validated).
         schemata = Schema.objects.filter(
@@ -87,10 +89,16 @@ class Schema(models.Model):
                 code='unique_together'
             )
 
+    def full_clean(self, *args, **kwargs):
+        print('Schema.full_clean')
+        super().full_clean(*args, **kwargs)
+
     def validate_unique(self, *args, **kwargs):
         # Make a tuple of selector objects for the schema being
         # validated.
         check = tuple(s.selector for s in self.selectors.all())
+        print('validate_unique: check =', check)
+        print(dir(self))
 
         self.check_unique_together(self.content_type, check, exclude=self.pk)
 

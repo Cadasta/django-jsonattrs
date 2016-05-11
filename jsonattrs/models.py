@@ -30,6 +30,11 @@ class SchemaManager(models.Manager):
                        lambda ss: ss.schema
                    )]
 
+        # Deal with schemata with no selectors (since they're not
+        # picked up by the groupby expression above).
+        empties = schemata.exclude(pk__in=[k.pk for k, g in grouped])
+        grouped += [(s, ()) for s in empties]
+
         # Find matches and return schemas as a queryset.
         pks = map(lambda g: g[0].pk,
                   filter(lambda g: g[1] == selectors, grouped))
@@ -88,7 +93,7 @@ class Schema(models.Model):
         # Make a tuple of selector objects for the schema being
         # validated.
         check = tuple(s.selector for s in self.selectors.all())
-        self.check_unique_together(self.content_type, check, exclude=self.pk)
+        self.check_unique_together(self.content_type, check, exclude=self)
 
     objects = SchemaManager()
 

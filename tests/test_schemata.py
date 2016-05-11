@@ -32,27 +32,36 @@ class SchemataTest(TestCase):
         assert (list(map(lambda ss: ss.selector, (schema.selectors.all()))) ==
                 [self.fixtures['org1'], self.fixtures['proj11']])
 
-    def test_schema_unique_together_ok(self):
-        Schema.objects.create(
+    def _create_test_schemata(self):
+        s1 = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
-        ).full_clean()
-        Schema.objects.create(
+        )
+        s2 = Schema.objects.create(
             content_type=self.fixtures['parcel_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj11'])
-        ).full_clean()
-        Schema.objects.create(
+        )
+        s3 = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org1'], self.fixtures['proj12'])
-        ).full_clean()
-        Schema.objects.create(
+        )
+        s4 = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org2'], self.fixtures['proj21'])
-        ).full_clean()
-        Schema.objects.create(
+        )
+        s5 = Schema.objects.create(
             content_type=self.fixtures['party_t'],
             selectors=(self.fixtures['org2'],)
-        ).full_clean()
+        )
+        s6 = Schema.objects.create(
+            content_type=self.fixtures['party_t'],
+            selectors=()
+        )
+        return s1, s2, s3, s4, s5, s6
+
+    def test_schema_unique_together_ok(self):
+        for s in self._create_test_schemata():
+            s.full_clean()
 
     def test_schema_unique_together_overlap(self):
         Schema.objects.create(
@@ -81,3 +90,19 @@ class SchemataTest(TestCase):
         )
         test_schema.delete()
         assert SchemaSelector.objects.count() == 0
+
+    def test_schema_by_selectors(self):
+        s1, s2, s3, s4, s5, s6 = self._create_test_schemata()
+        party = self.fixtures['party_t']
+        parcel = self.fixtures['parcel_t']
+        org1 = self.fixtures['org1']
+        org2 = self.fixtures['org2']
+        prj11 = self.fixtures['proj11']
+        prj12 = self.fixtures['proj12']
+        prj21 = self.fixtures['proj21']
+        assert list(Schema.objects.by_selectors(party, (org1, prj11))) == [s1]
+        assert list(Schema.objects.by_selectors(parcel, (org1, prj11))) == [s2]
+        assert list(Schema.objects.by_selectors(party, (org1, prj12))) == [s3]
+        assert list(Schema.objects.by_selectors(party, (org2, prj21))) == [s4]
+        assert list(Schema.objects.by_selectors(party, (org2,))) == [s5]
+        assert list(Schema.objects.by_selectors(party, ())) == [s6]

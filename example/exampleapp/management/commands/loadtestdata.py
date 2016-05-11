@@ -1,8 +1,10 @@
+import itertools
+
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 
-from jsonattrs.models import Schema
+from jsonattrs.models import Schema, Attribute
 from exampleapp.models import Division, Department, Party
 
 
@@ -102,69 +104,52 @@ SCHEMATA = [
      'selectors': (),
      'fields': [
          {'name': 'turnover', 'long_name': 'Total divisional turnover',
-          'coarse_type': 'IntField', 'subtype': 'currency',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': False, 'omit': False}
+          'coarse_type': 'IntField', 'subtype': 'currency'}
      ]},
 
     {'content_type': 'department',
      'selectors': (),
      'fields': [
          {'name': 'chief', 'long_name': 'Department chief',
-          'coarse_type': 'CharField', 'subtype': 'FK:Party',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': False, 'omit': False}
+          'coarse_type': 'CharField', 'subtype': 'foreign-key(Party)'}
      ]},
 
     {'content_type': 'party',
      'selectors': (),
      'fields': [
          {'name': 'office', 'long_name': 'City of base office',
-          'coarse_type': 'CharField', 'subtype': 'city',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': True, 'omit': False},
+          'coarse_type': 'CharField', 'subtype': 'city', 'required': True},
          {'name': 'salary', 'long_name': 'Employee salary',
-          'coarse_type': 'IntField', 'subtype': 'currency',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': False, 'omit': False}
+          'coarse_type': 'IntField', 'subtype': 'currency'}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil',),
      'fields': [
          {'name': 'digger', 'long_name': 'Can dig!',
-          'coarse_type': 'BooleanField', 'subtype': '',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': True, 'omit': False},
+          'coarse_type': 'BooleanField', 'required': True},
          {'name': 'certification', 'long_name': 'CEng certification level',
-          'coarse_type': 'ChoiceField', 'subtype': '',
-          'unique_together': False, 'unique': False,
+          'coarse_type': 'ChoiceField',
           'choices': 'None,Apprentice,Journeyman,Master', 'default': 'None',
-          'required': True, 'omit': False}
+          'required': True}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil', 'Bridges'),
      'fields': [
          {'name': 'vertigo', 'long_name': 'Gets vertigo',
-          'coarse_type': 'BooleanField', 'subtype': '',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': True, 'omit': False}
+          'coarse_type': 'BooleanField', 'required': True}
      ]},
     {'content_type': 'party',
      'selectors': ('Marine',),
      'fields': [
          {'name': 'aquatic', 'long_name': 'Can breathe underwater!',
-          'coarse_type': 'BooleanField', 'subtype': '',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': True, 'omit': False}
+          'coarse_type': 'BooleanField', 'required': True}
      ]},
 
     {'content_type': 'contract',
      'selectors': (),
      'fields': [
          {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
-          'coarse_type': 'CharField', 'subtype': 'country',
-          'unique_together': False, 'unique': False,
-          'choices': '', 'default': '', 'required': True, 'omit': False}
+          'coarse_type': 'CharField', 'subtype': 'country', 'required': True}
      ]}
 ]
 
@@ -187,20 +172,38 @@ def selectors_from_names(selector_names):
 def delete_schemata():
     for schema in SCHEMATA:
         try:
+            print('Deleting schema:',
+                  schema['content_type'], schema['selectors'])
             Schema.objects.by_selectors(
                 content_type=named_content_type(schema['content_type']),
                 selectors=selectors_from_names(schema['selectors'])
             ).delete()
         except ObjectDoesNotExist:
+            print('Failed deleting schema:', schema)
             pass
 
 
 def create_schemata():
     for schema in SCHEMATA:
-        Schema.objects.create(
+        print('Creating schema:', schema['content_type'], schema['selectors'])
+        schema_obj = Schema.objects.create(
             content_type=named_content_type(schema['content_type']),
             selectors=selectors_from_names(schema['selectors'])
         )
+        for field, index in zip(schema['fields'], itertools.count(1)):
+            subtype = field.get('subtype', '')
+            choices = field.get('choices', '')
+            default = field.get('default', '')
+            required = field.get('required', False)
+            omit = field.get('omit', False)
+            Attribute.objects.create(
+                schema=schema_obj,
+                name=field['name'], long_name=field['long_name'],
+                coarse_type=field['coarse_type'], subtype=subtype,
+                index=index,
+                choices=choices, default=default,
+                required=required, omit=omit
+            )
 
 
 class Command(BaseCommand):
@@ -214,8 +217,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['delete']:
-            process_data(delete_object, DATA)
             delete_schemata()
+            process_data(delete_object, DATA)
         else:
             process_data(create_object, DATA)
             create_schemata()

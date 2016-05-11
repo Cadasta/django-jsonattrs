@@ -35,6 +35,7 @@
           <input id="{{ form.DELETE.id_for_label }}"
                  type="checkbox" hidden="true"
                  name="{{ form.DELETE.html_name }}">
+          {{ form.id }}
           {{ form.index }}
           {{ form.name.errors.as_ul }}
           {{ form.name }}
@@ -102,6 +103,7 @@
         <input id="{{ empty_row.DELETE.id_for_label }}"
                type="checkbox" hidden="true"
                name="{{ empty_row.DELETE.html_name }}">
+        {{ empty_row.id }}
         {{ empty_row.index }}
         {{ empty_row.name.errors.as_ul }}
         {{ empty_row.name }}

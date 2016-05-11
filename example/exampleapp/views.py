@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 from django.core.urlresolvers import reverse_lazy
 from django.forms import ModelForm, ModelChoiceField
 from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError
 import django.db.transaction as transaction
 from django.db.utils import OperationalError
 
@@ -117,19 +118,15 @@ class SchemaMixin:
                 selectors = (div, dept)
         try:
             with transaction.atomic():
-                print('form_valid: inside TX')
                 self.set_up_schema(content_type, selectors)
                 self.formset = AttributeFormSet(
                     self.request.POST, self.request.FILES,
                     instance=self.schema
                 )
                 if not self.formset.is_valid():
-                    print('Formset is bad')
-                    print(self.formset.errors)
-                    raise transaction.IntegrityError
+                    raise IntegrityError
                 self.formset.save()
-        except Exception as e:
-            print('Something wrong:', e)
+        except:
             return self.form_invalid(self.get_form())
         else:
             return redirect(self.success_url)
@@ -155,11 +152,7 @@ class SchemaUpdate(SchemaMixin, generic.FormView):
                 else Schema.objects.get(pk=self.kwargs['pk']))
 
     def set_up_schema(self, content_type, selectors):
-        self.schema = Schema.objects.get(pk=self.kwargs['pk'])
-        self.schema.content_type = content_type
-        self.schema.selectors = selectors
-        self.schema.save()
-        self.schema.attributes.all().delete()
+        self.schema = Schema.objects.by_selectors(content_type, selectors)[0]
 
 
 class SchemaDelete(edit.DeleteView):

@@ -123,7 +123,9 @@ FIELD_TYPE_CHOICES = [(field, field) for field in FIELD_TYPES]
 
 
 class Attribute(models.Model):
-    schema = models.ForeignKey(Schema, related_name='attributes')
+    schema = models.ForeignKey(
+        Schema, related_name='attributes', on_delete=models.CASCADE
+    )
     name = models.CharField(max_length=50)
     long_name = models.CharField(max_length=50, blank=True)
     coarse_type = models.CharField(max_length=255, choices=FIELD_TYPE_CHOICES)
@@ -133,3 +135,6 @@ class Attribute(models.Model):
     default = models.CharField(max_length=50, blank=True)
     required = models.BooleanField(default=False)
     omit = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ('schema', 'index')

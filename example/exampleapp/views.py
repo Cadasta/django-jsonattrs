@@ -81,15 +81,16 @@ class SchemaMixin:
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        if self.get_object() is not None:
-            print('AttributeFormSet for', self.get_object())
-            context['formset'] = AttributeFormSet(instance=self.get_object())
-        else:
-            context['formset'] = AttributeFormSet()
+        if not hasattr(self, 'formset'):
+            if self.get_object() is not None:
+                self.formset = AttributeFormSet(instance=self.get_object())
+            else:
+                self.formset = AttributeFormSet()
+        context['formset'] = self.formset
+        context['empty_row'] = self.formset.empty_form
         return context
 
     def form_valid(self, form):
-        print('SchemaMixin: form_valid')
         content_type = ContentType.objects.get(
             pk=self.request.POST['content_type']
         )
@@ -120,23 +121,23 @@ class SchemaCreate(SchemaMixin, generic.FormView):
 
     def get_object(self):
         return self.schema if hasattr(self, 'schema') else None
-
-    def process(self, request, content_type, selectors):
         print('SchemaCreate: process')
         print('  content_type =', content_type)
         print('  selectors =', selectors)
+
+    def process(self, request, content_type, selectors):
         with transaction.atomic():
             self.schema = Schema.objects.create(
                 content_type=content_type, selectors=selectors
             )
-            formset = AttributeFormSet(request.POST, request.FILES,
-                                       instance=self.schema)
-            if not formset.is_valid():
-                print('Formset is bad')
-                print(formset.errors)
+            self.formset = AttributeFormSet(
+                request.POST, request.FILES, instance=self.schema
+            )
+            if not self.formset.is_valid():
+                print('Formset is bad:', self.formset.errors)
+                print(self.formset.data)
                 raise transaction.IntegrityError
-            print('Formset OK')
-            formset.save()
+            self.formset.save()
 
 
 class SchemaUpdate(SchemaMixin, generic.FormView):

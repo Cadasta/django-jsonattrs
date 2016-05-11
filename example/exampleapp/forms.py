@@ -20,7 +20,8 @@ AttributeFormSet = inlineformset_factory(
     Schema, Attribute, formset=AttributeInlineFormSet,
     fields=('name', 'long_name', 'coarse_type', 'subtype', 'index',
             'choices', 'default', 'required', 'omit'),
-    widgets={'index': HiddenInput(), 'DELETE': HiddenInput()}
+    widgets={'index': HiddenInput(), 'DELETE': HiddenInput()},
+    extra=0
 )
 
 

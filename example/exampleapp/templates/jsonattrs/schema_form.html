@@ -15,8 +15,6 @@
   {{ formset.management_form }}
   {{ formset.non_form_errors.as_ul }}
   <table id="formset" class="form">
-    {% for form in formset.forms %}
-    {% if forloop.first %}
     <thead>
       <tr>
         <th>Name</th>
@@ -31,7 +29,7 @@
       </tr>
     </thead>
     <tbody id="rows">
-    {% endif %}
+    {% for form in formset.forms %}
       <tr>
         <td>
           <input id="{{ form.DELETE.id_for_label }}"
@@ -96,6 +94,60 @@
     <input type="button" value="Cancel" />
   </a>
 </form>
+
+<div id="empty_row" style="display: none;">
+  <table>
+    <tr>
+      <td>
+        <input id="{{ empty_row.DELETE.id_for_label }}"
+               type="checkbox" hidden="true"
+               name="{{ empty_row.DELETE.html_name }}">
+        {{ empty_row.index }}
+        {{ empty_row.name.errors.as_ul }}
+        {{ empty_row.name }}
+      </td>
+      <td>
+        {{ empty_row.long_name.errors.as_ul }}
+        {{ empty_row.long_name }}
+      </td>
+      <td>
+        {{ empty_row.coarse_type.errors.as_ul }}
+        {{ empty_row.coarse_type }}
+      </td>
+      <td>
+        {{ empty_row.subtype.errors.as_ul }}
+        {{ empty_row.subtype }}
+      </td>
+      <td>
+        {{ empty_row.choices.errors.as_ul }}
+        {{ empty_row.choices }}
+      </td>
+      <td>
+        {{ empty_row.default.errors.as_ul }}
+        {{ empty_row.default }}
+      </td>
+      <td>
+        {{ empty_row.required.errors.as_ul }}
+        {{ empty_row.required }}
+      </td>
+      <td>
+        {{ empty_row.omit.errors.as_ul }}
+        {{ empty_row.omit }}
+      </td>
+      <td>
+        <button type="button" class="row-up">
+          <strong>&uArr;</strong>
+        </button>
+        <button type="button" class="row-dn">
+          <strong>&dArr;</strong>
+        </button>
+        <button type="button" class="row-del">
+          <strong>X</strong>
+        </button>
+      </td>
+    </tr>
+  </table>
+</div>
 
 {% endblock %}
 
@@ -165,7 +217,7 @@
        new_row.show();
        ddeleted = -1;
      } else {
-       new_row = $($(rows).children()[0]).clone();
+       new_row = $($("#empty_row tr")[0]).clone();
        new_row.find('input,select').each(function() {
          var fld = $(this).attr('id').replace(/id_attributes-.*-/, '');
          switch (fields[fld]) {
@@ -211,6 +263,7 @@
    $('.row-up').click(up_row);
    $('.row-dn').click(dn_row);
    $('#row-add').click(add_row);
+   $("td ul.errorlist").parents('td').css("border", "1px solid red");
    renumber();
  });
 </script>

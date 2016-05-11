@@ -3,8 +3,20 @@ def pytest_configure():
 
     settings.configure(
         DEBUG_PROPAGATE_EXCEPTIONS=True,
-        DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3',
-                               'NAME': ':memory:'}},
+        DEBUG=True,
+        DATABASES={
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'jsonattrs_test',
+                'USER': 'jsonattrs',
+                'PASSWORD': 'jsonattrs',
+                'HOST': 'localhost',
+            }
+        },
+        JSONATTRS_SCHEMA_SELECTORS=(
+            ('organization', 'project__organization'),
+            'project'
+        ),
         SITE_ID=1,
         SECRET_KEY='not very secret in tests',
         USE_I18N=True,

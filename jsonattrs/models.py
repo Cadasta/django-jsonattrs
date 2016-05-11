@@ -138,3 +138,4 @@ class Attribute(models.Model):
 
     class Meta:
         ordering = ('schema', 'index')
+        unique_together = (('schema', 'index'), ('schema', 'name'))

@@ -4,14 +4,9 @@ from django.db import models
 from jsonattrs.fields import JSONAttributeField
 
 
-class EntityAttributeField(JSONAttributeField):
-    schema_selectors = (('organization', 'project__organization'),
-                        'project')
-
-
 class Organization(models.Model):
     name = models.CharField(max_length=100)
-    attrs = EntityAttributeField(null=True)
+    attrs = JSONAttributeField(default=dict)
 
     class Meta:
         ordering = ('name',)
@@ -23,7 +18,7 @@ class Organization(models.Model):
 class Project(models.Model):
     name = models.CharField(max_length=100)
     organization = models.ForeignKey(Organization)
-    attrs = EntityAttributeField(null=True)
+    attrs = JSONAttributeField(default=dict)
 
     class Meta:
         ordering = ('organization', 'name')
@@ -35,7 +30,7 @@ class Project(models.Model):
 class Party(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
-    attrs = EntityAttributeField(null=True)
+    attrs = JSONAttributeField(default=dict)
 
     class Meta:
         ordering = ('project', 'name')
@@ -47,7 +42,7 @@ class Party(models.Model):
 class Parcel(models.Model):
     project = models.ForeignKey(Project)
     address = models.CharField(max_length=200)
-    attrs = EntityAttributeField(null=True)
+    attrs = JSONAttributeField(default=dict)
 
     class Meta:
         ordering = ('project', 'address')

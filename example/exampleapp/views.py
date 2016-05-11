@@ -68,6 +68,7 @@ class SchemaList(generic.ListView):
 
 class SchemaMixin:
     form_class = SchemaForm
+    success_url = reverse_lazy('schema-list')
 
     def get_initial(self):
         obj = self.get_object()
@@ -78,6 +79,13 @@ class SchemaMixin:
                     'department': sels[1].selector if len(sels) > 1 else None}
         else:
             return {}
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        obj = self.get_object()
+        if obj is not None:
+            kwargs.update({'instance': obj})
+        return kwargs
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -108,8 +116,20 @@ class SchemaMixin:
                 )
                 selectors = (div, dept)
         try:
-            self.process(self.request, content_type, selectors)
-        except:
+            with transaction.atomic():
+                print('form_valid: inside TX')
+                self.set_up_schema(content_type, selectors)
+                self.formset = AttributeFormSet(
+                    self.request.POST, self.request.FILES,
+                    instance=self.schema
+                )
+                if not self.formset.is_valid():
+                    print('Formset is bad')
+                    print(self.formset.errors)
+                    raise transaction.IntegrityError
+                self.formset.save()
+        except Exception as e:
+            print('Something wrong:', e)
             return self.form_invalid(self.get_form())
         else:
             return redirect(self.success_url)
@@ -117,47 +137,29 @@ class SchemaMixin:
 
 class SchemaCreate(SchemaMixin, generic.FormView):
     template_name = 'jsonattrs/schema_create_form.html'
-    success_url = reverse_lazy('schema-list')
 
     def get_object(self):
         return self.schema if hasattr(self, 'schema') else None
 
-    def process(self, request, content_type, selectors):
-        with transaction.atomic():
-            self.schema = Schema.objects.create(
-                content_type=content_type, selectors=selectors
-            )
-            print('SchemaCreate.process:', request.POST)
-            self.formset = AttributeFormSet(
-                request.POST, request.FILES, instance=self.schema
-            )
-            if not self.formset.is_valid():
-                print('Formset is bad:', self.formset.errors)
-                print(self.formset.data)
-                raise transaction.IntegrityError
-            self.formset.save()
+    def set_up_schema(self, content_type, selectors):
+        self.schema = Schema.objects.create(
+            content_type=content_type, selectors=selectors
+        )
 
 
 class SchemaUpdate(SchemaMixin, generic.FormView):
     template_name = 'jsonattrs/schema_update_form.html'
-    success_url = reverse_lazy('schema-list')
 
     def get_object(self):
-        print('SchemaUpdate: get_object')
-        return Schema.objects.get(pk=self.kwargs['pk'])
+        return (self.schema if hasattr(self, 'schema')
+                else Schema.objects.get(pk=self.kwargs['pk']))
 
-    def process(self, request, content_type, selectors):
-        with transaction.atomic():
-            schema = self.instance  # ???
-            schema.content_type = content_type
-            schema.selectors = selectors
-            schema.save()
-            formset = AttributeFormSet(request.POST, request.FILES)
-            if not formset.is_valid():
-                print('Formset is bad')
-                print(formset)
-                raise transaction.IntegrityError
-            formset.save()
+    def set_up_schema(self, content_type, selectors):
+        self.schema = Schema.objects.get(pk=self.kwargs['pk'])
+        self.schema.content_type = content_type
+        self.schema.selectors = selectors
+        self.schema.save()
+        self.schema.attributes.all().delete()
 
 
 class SchemaDelete(edit.DeleteView):

@@ -42,15 +42,15 @@ class SchemaForm(forms.Form):
         queryset=Department.objects.all(), empty_label='*', required=False
     )
 
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         cleaned_data = super().clean()
         content_type = cleaned_data.get('content_type')
         division = cleaned_data.get('division')
         department = cleaned_data.get('department')
-        print('SchemaForm: clean')
-        print('  content_type =', content_type)
-        print('  division =', division)
-        print('  department =', department)
         check = ()
         if division is not None:
             division = Division.objects.get(name=division)
@@ -58,5 +58,9 @@ class SchemaForm(forms.Form):
             if department is not None:
                 department = Department.objects.get(name=department)
                 check = (division, department)
-        print('Calling Schema.check_unique_together: check =', check)
-        Schema.check_unique_together(content_type, check)
+        if self.instance is not None:
+            Schema.check_unique_together(
+                content_type, check, exclude=self.instance
+            )
+        else:
+            Schema.check_unique_together(content_type, check)

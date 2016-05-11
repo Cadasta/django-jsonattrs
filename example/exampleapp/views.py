@@ -121,15 +121,13 @@ class SchemaCreate(SchemaMixin, generic.FormView):
 
     def get_object(self):
         return self.schema if hasattr(self, 'schema') else None
-        print('SchemaCreate: process')
-        print('  content_type =', content_type)
-        print('  selectors =', selectors)
 
     def process(self, request, content_type, selectors):
         with transaction.atomic():
             self.schema = Schema.objects.create(
                 content_type=content_type, selectors=selectors
             )
+            print('SchemaCreate.process:', request.POST)
             self.formset = AttributeFormSet(
                 request.POST, request.FILES, instance=self.schema
             )

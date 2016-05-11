@@ -159,16 +159,16 @@
 
    function nforms() { return Number($('#id_attributes-TOTAL_FORMS').attr('value')); }
    function field(name, idx) { return '#id_attributes-' + idx + '-' + name; }
-   var fields = {"DELETE": "checkbox",
-                 "index": "hidden",
-                 "name": "text",
-                 "long_name": "text",
-                 "coarse_type": "select",
-                 "subtype": "text",
-                 "choices": "text",
-                 "default": "text",
-                 "required": "checkbox",
-                 "omit": "checkbox"};
+   var fields = {'DELETE': 'checkbox',
+                 'index': 'hidden',
+                 'name': 'text',
+                 'long_name': 'text',
+                 'coarse_type': 'select',
+                 'subtype': 'text',
+                 'choices': 'text',
+                 'default': 'text',
+                 'required': 'checkbox',
+                 'omit': 'checkbox'};
 
    var rows = $('#rows');
    var orig = nforms(), live = orig, deleted = 0;
@@ -213,11 +213,11 @@
      var ddeleted = 0;
      if (deleted > 0) {
        new_row = $($(rows).children()[live]);
-       new_row.find(field('DELETE', live)).val(false);
+       new_row.find(field('DELETE', live)).prop('checked', false);
        new_row.show();
        ddeleted = -1;
      } else {
-       new_row = $($("#empty_row tr")[0]).clone();
+       new_row = $($('#empty_row tr')[0]).clone();
        new_row.find('input,select').each(function() {
          var fld = $(this).attr('id').replace(/id_attributes-.*-/, '');
          switch (fields[fld]) {
@@ -263,7 +263,7 @@
    $('.row-up').click(up_row);
    $('.row-dn').click(dn_row);
    $('#row-add').click(add_row);
-   $("td ul.errorlist").parents('td').css("border", "1px solid red");
+   $('td ul.errorlist').parents('td').css('border', '1px solid red');
    renumber();
  });
 </script>

@@ -10,10 +10,15 @@ from .models import Division, Department
 
 class AttributeInlineFormSet(forms.BaseInlineFormSet):
     def clean(self):
-        print('AttributeInlineFormSet.clean')
-        print(self)
-        print(self.data)
         super().clean()
+        if any(self.errors):
+            return
+        names = []
+        for form in self.forms:
+            name = form.cleaned_data['name']
+            if name in names:
+                raise forms.ValidationError("Field names must be unique.")
+            names.append(name)
 
 
 AttributeFormSet = inlineformset_factory(

@@ -14,7 +14,9 @@ class FieldTest(TestCase):
 
     def test_schema_from_field(self):
         tstorg = Organization.objects.create(name='testorg')
-        print(tstorg.attrs)
+        print(tstorg._meta.get_field('attrs'))
+        print(tstorg._meta.get_field('attrs').__class__)
+        print(dir(tstorg._meta.get_field('attrs')))
         assert (self.fixtures['org1'].attrs.schema() ==
                 self.schemata['org-default'])
 

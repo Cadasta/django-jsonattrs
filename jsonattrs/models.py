@@ -1,6 +1,8 @@
+import re
 from itertools import groupby, count
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -122,6 +124,38 @@ class SchemaSelector(models.Model):
 FIELD_TYPE_CHOICES = [(field, field) for field in FIELD_TYPES]
 
 
+ATTRIBUTE_VALIDATORS = {}
+
+
+def validator(type, check_valid):
+    if not isinstance(tuple, type):
+        type = (type, None)
+    ATTRIBUTE_VALIDATORS[type] = check_valid
+
+
+def re_validate(re):
+    return lambda v: re.match(v) is not None
+
+
+int_re = re.compile(r'[-+]?\d+')
+pint_re = re.compile(r'\d+')
+csint_re = re.compile(r'([-+]?\d+)(,[-+]?\d+*)')
+decimal_re = re.compile(r'')
+
+
+validator('BigIntegerField', re_validate(int_re))
+validator('IntegerField', re_validate(int_re))
+validator('SmallIntegerField', re_validate(int_re))
+validator('PositiveIntegerField', re_validate(pint_re))
+validator('PositiveSmallIntegerField', re_validate(pint_re))
+validator('BooleanField', lambda v: isinstance(v, bool))
+validator('CharField', lambda v: isinstance(v, str))
+validator('CommaSeparatedIntegerField', re_validate(csint_re))
+
+
+# TODO: fill in more validators here.
+
+
 class Attribute(models.Model):
     schema = models.ForeignKey(
         Schema, related_name='attributes', on_delete=models.CASCADE
@@ -139,3 +173,20 @@ class Attribute(models.Model):
     class Meta:
         ordering = ('schema', 'index')
         unique_together = (('schema', 'index'), ('schema', 'name'))
+
+    def validate(self, value):
+        print('Validating', self.name, 'for', value)
+        if self.choices is not None and self.choices != '':
+            if value not in self.choices.split(','):
+                print('choices =', self.choices)
+                raise ValidationError(
+                    _('Invalid choice for %(field)s: "%(value)s"'),
+                    params={'field': self.name, 'value': value}
+                )
+        if (self.coarse_type, self.subtype) in ATTRIBUTE_VALIDATORS:
+            check = ATTRIBUTE_VALIDATORS[(self.coarse_type, self.subtype)]
+            if not check(value):
+                raise ValidationError(
+                    _('Validation failed for %(field)s: "%(value)s"'),
+                    params={'field': self.name, 'value': value}
+                )

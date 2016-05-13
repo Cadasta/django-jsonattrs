@@ -6,7 +6,7 @@ from django.forms import ModelForm, ModelChoiceField
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
 import django.db.transaction as transaction
-from django.db.utils import OperationalError
+from django.db.utils import OperationalError, ProgrammingError
 
 from jsonattrs.models import Schema
 
@@ -19,8 +19,10 @@ try:
                                     model='division')
     dept_t = ContentType.objects.get(app_label='exampleapp',
                                      model='department')
+# These can happen when constructing database migrations from scratch.
 except OperationalError:
-    # Happens when constructing database migrations from scratch.
+    pass
+except ProgrammingError:
     pass
 
 

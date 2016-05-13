@@ -2,7 +2,6 @@ from django.conf import settings
 
 
 DEFAULT_FIELD_TYPES = [
-    'AutoField',
     'BooleanField',
     'CharField',
     'CommaSeparatedIntegerField',
@@ -10,9 +9,7 @@ DEFAULT_FIELD_TYPES = [
     'DateTimeField',
     'DecimalField',
     'EmailField',
-    'FileField',
     'FloatField',
-    'ImageField',
     'NullBooleanField',
     'SlugField',
     'TimeField',

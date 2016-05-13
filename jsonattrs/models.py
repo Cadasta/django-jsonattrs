@@ -175,10 +175,8 @@ class Attribute(models.Model):
         unique_together = (('schema', 'index'), ('schema', 'name'))
 
     def validate(self, value):
-        print('Validating', self.name, 'for', value)
         if self.choices is not None and self.choices != '':
             if value not in self.choices.split(','):
-                print('choices =', self.choices)
                 raise ValidationError(
                     _('Invalid choice for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}

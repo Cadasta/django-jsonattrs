@@ -35,22 +35,20 @@ class JSONAttributes(UserDict):
 
         super().__init__(*args, **kwargs)
 
-    def __getitem__(self, key):
-        print('JSONAttributes.__getitem__: key =', key)
+    def _check_key(self, key):
         if key not in self._attrs:
             raise KeyError(key)
+
+    def __getitem__(self, key):
+        self._check_key(key)
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        print('JSONAttributes.__setitem__: key =', key, '  value =', value)
-        if key not in self._attrs:
-            raise KeyError(key)
+        self._check_key(key)
         return super().__setitem__(key, value)
 
     def __delitem__(self, key):
-        print('JSONAttributes.__detitem__: key =', key)
-        if key in self._required_attrs:
-            raise KeyError(key)
+        self._check_key(key)
         return super().__delitem__(key)
 
     @property

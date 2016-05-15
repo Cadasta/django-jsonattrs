@@ -36,7 +36,7 @@ class JSONAttributes(UserDict):
         # fill in defaults if they don't exist.
         for key in self._required_attrs:
             if key not in kwargs:
-                kwargs[key] = self._attrs[key].default
+                self[key] = self._attrs[key].default
 
         # Validate all kwargs.
         for name, value in kwargs.items():
@@ -45,9 +45,7 @@ class JSONAttributes(UserDict):
         # Add defaulted fields to kwargs
         for key in self._default_attrs:
             if key not in kwargs:
-                kwargs[key] = self._attrs[key].default
-
-        super().__init__(*args, **kwargs)
+                self[key] = self._attrs[key].default
 
     def _check_key(self, key):
         if self._schema is None:
@@ -89,17 +87,14 @@ class JSONAttributes(UserDict):
 class JSONAttributeField(JSONField):
     description = _('A managed JSON attribute set')
 
-    # Needs method to:
-    #  - Get model object
-    #  - Get model fields based on JSONATTRS_SCHEMA_SELECTORS
-    #  - Build selector tuple
-    #  - Look up schema
-
     def __init__(self, *args, **kwargs):
         kwargs['default'] = JSONAttributes
         super().__init__(*args, **kwargs)
 
     def to_python(self, value):
+        return JSONAttributes(value)
+
+    def from_db_value(self, value, expression, connection, context):
         return JSONAttributes(value)
 
     def get_prep_value(self, value):

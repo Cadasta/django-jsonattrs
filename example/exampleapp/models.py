@@ -2,11 +2,13 @@ from django.core.urlresolvers import reverse
 from django.db import models
 
 from jsonattrs.fields import JSONAttributeField
+from jsonattrs.decorators import fix_model_for_attributes
 
 
+@fix_model_for_attributes
 class Division(models.Model):
     name = models.CharField(max_length=100)
-    attrs = JSONAttributeField(null=True)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('name',)
@@ -15,10 +17,11 @@ class Division(models.Model):
         return self.name
 
 
+@fix_model_for_attributes
 class Department(models.Model):
     name = models.CharField(max_length=100)
     division = models.ForeignKey(Division, related_name='departments')
-    attrs = JSONAttributeField(null=True)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('division', 'name')
@@ -27,10 +30,11 @@ class Department(models.Model):
         return self.name
 
 
+@fix_model_for_attributes
 class Party(models.Model):
     department = models.ForeignKey(Department, related_name='parties')
     name = models.CharField(max_length=100)
-    attrs = JSONAttributeField(null=True)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('department', 'name')
@@ -42,10 +46,11 @@ class Party(models.Model):
         return self.name
 
 
+@fix_model_for_attributes
 class Contract(models.Model):
     department = models.ForeignKey(Department, related_name='contracts')
     responsible = models.ForeignKey(Party)
-    attrs = JSONAttributeField(null=True)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('department', 'pk')

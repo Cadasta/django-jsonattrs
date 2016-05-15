@@ -2,11 +2,13 @@ from django.core.urlresolvers import reverse
 from django.db import models
 
 from jsonattrs.fields import JSONAttributeField
+from jsonattrs.decorators import fix_model_for_attributes
 
 
+@fix_model_for_attributes
 class Organization(models.Model):
     name = models.CharField(max_length=100)
-    attrs = JSONAttributeField(default=dict)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('name',)
@@ -15,10 +17,11 @@ class Organization(models.Model):
         return self.name
 
 
+@fix_model_for_attributes
 class Project(models.Model):
     name = models.CharField(max_length=100)
     organization = models.ForeignKey(Organization)
-    attrs = JSONAttributeField(default=dict)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('organization', 'name')
@@ -27,10 +30,11 @@ class Project(models.Model):
         return self.name
 
 
+@fix_model_for_attributes
 class Party(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
-    attrs = JSONAttributeField(default=dict)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('project', 'name')
@@ -39,10 +43,11 @@ class Party(models.Model):
         return reverse('party-detail', kwargs={'pk': self.pk})
 
 
+@fix_model_for_attributes
 class Parcel(models.Model):
     project = models.ForeignKey(Project)
     address = models.CharField(max_length=200)
-    attrs = JSONAttributeField(default=dict)
+    attrs = JSONAttributeField()
 
     class Meta:
         ordering = ('project', 'address')

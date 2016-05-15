@@ -47,10 +47,10 @@ SCHEMATA = [
      'content_type': 'organization',
      'selectors': (),
      'fields': [
-         {'name': 'home-office',
+         {'name': 'home_office',
           'long_name': 'Country of organization home office',
           'coarse_type': 'CharField', 'subtype': 'country',
-          'required': True}
+          'default': 'New York', 'required': True}
      ]},
 
     {'name': 'prj-default',

@@ -2,6 +2,7 @@ import re
 from itertools import groupby, count
 
 from django.db import models
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -41,6 +42,18 @@ class SchemaManager(models.Manager):
         pks = map(lambda g: g[0].pk,
                   filter(lambda g: g[1] == selectors, grouped))
         return self.filter(pk__in=pks)
+
+    def from_instance(self, instance):
+        content_type = ContentType.objects.get_for_model(instance)
+        selectors = ()
+        schemas = list(self.by_selectors(content_type, selectors))
+        for s in settings.JSONATTRS_SCHEMA_SELECTORS:
+            field = s
+            if isinstance(s, tuple):
+                field = s[1]
+            selectors = (getattr(instance, field, None),) + selectors
+            schemas += list(self.by_selectors(content_type, selectors))
+        return schemas
 
 
 class Schema(models.Model):
@@ -128,7 +141,7 @@ ATTRIBUTE_VALIDATORS = {}
 
 
 def validator(type, check_valid):
-    if not isinstance(tuple, type):
+    if not isinstance(type, tuple):
         type = (type, None)
     ATTRIBUTE_VALIDATORS[type] = check_valid
 
@@ -139,7 +152,7 @@ def re_validate(re):
 
 int_re = re.compile(r'[-+]?\d+')
 pint_re = re.compile(r'\d+')
-csint_re = re.compile(r'([-+]?\d+)(,[-+]?\d+*)')
+csint_re = re.compile(r'([-+]?\d+)(,[-+]?\d+)*')
 decimal_re = re.compile(r'')
 
 

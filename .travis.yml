@@ -11,8 +11,7 @@ matrix:
 install:
   - pip install tox
 before_script:
-  - createuser -U postgres jsonattrs
-  - createdb -U postgres -O jsonattrs jsonattrs_test
+  - createuser -U postgres --createdb jsonattrs
 script:
   - tox -e $TOX_ENV
 notifications:

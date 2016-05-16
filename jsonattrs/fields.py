@@ -12,7 +12,7 @@ from .models import Schema
 
 class JSONAttributes(UserDict):
     def __init__(self, *args, **kwargs):
-        self._schema = None
+        self._schemas = None
         super().__init__(*args, **kwargs)
 
     def setup_schema(self, *args, **kwargs):
@@ -21,16 +21,25 @@ class JSONAttributes(UserDict):
                 'model instance not set in JSONAttributes.setup_schema'
             )
 
-        # Determine schema.
-        schemas = Schema.objects.from_instance(self._instance)
-        self._schema = list(schemas)[-1]
+        # Determine schemas for model instance containing this field.
+        self._schemas = Schema.objects.from_instance(self._instance)
 
         # Extract schema attributes, names of required attributes and
-        # names of attributes with defaults.
-        sattrs = self._schema.attributes.all()
-        self._attrs = OrderedDict((a.name, a) for a in sattrs)
-        self._required_attrs = {a.name for a in sattrs if a.required}
-        self._default_attrs = {a.name for a in sattrs if a.default is not None}
+        # names of attributes with defaults, composing schemas for
+        # instance.
+        sattrs = [s.attributes.all() for s in self._schemas]
+        self._attrs = OrderedDict()
+        for sas in sattrs:
+            for sa in sas:
+                if sa.omit:
+                    if sa.name in self._attrs:
+                        del self._attrs[sa.name]
+                else:
+                    self._attrs[sa.name] = sa
+        self._required_attrs = {n for n, a in self._attrs.items()
+                                if a.required}
+        self._default_attrs = {n for n, a in self._attrs.items()
+                               if a.default is not None}
 
         # Check for presence of all required attributes in kwargs and
         # fill in defaults if they don't exist.
@@ -48,38 +57,38 @@ class JSONAttributes(UserDict):
                 self[key] = self._attrs[key].default
 
     def _check_key(self, key):
-        if self._schema is None:
+        if self._schemas is None:
             self.setup_schema()
         if key not in self._attrs:
             raise KeyError(key)
 
     def __getitem__(self, key):
-        if self._schema is None:
+        if self._schemas is None:
             self.setup_schema()
         self._check_key(key)
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        if self._schema is None:
+        if self._schemas is None:
             self.setup_schema()
         self._check_key(key)
         return super().__setitem__(key, value)
 
     def __delitem__(self, key):
-        if self._schema is None:
+        if self._schemas is None:
             self.setup_schema()
         self._check_key(key)
         return super().__delitem__(key)
 
     @property
-    def schema(self):
-        if self._schema is None:
+    def schemas(self):
+        if self._schemas is None:
             self.setup_schema()
-        return self._schema
+        return self._schemas
 
     @property
     def attributes(self):
-        if self._schema is None:
+        if self._schemas is None:
             self.setup_schema()
         return self._attrs
 

@@ -11,8 +11,8 @@ class FieldTest(TestCase):
         self.schemata = create_schema_fixtures(self.fixtures)
 
     def test_schema_from_field(self):
-        assert (self.fixtures['org1'].attrs.schema ==
-                self.schemata['org-default'])
+        assert (self.fixtures['org1'].attrs.schemas ==
+                [self.schemata['org-default']])
 
     def test_attributes_assignment(self):
         tstorg = Organization.objects.create(name='testorg')

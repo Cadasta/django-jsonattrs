@@ -22,6 +22,8 @@ class JSONAttributes(UserDict):
     def setup_from_dict(self, dict):
         self.setup_schema()
         for k, v in dict.items():
+            self._check_key(k)
+            self._attrs[k].validate(v)
             self[k] = v
 
     def setup_schema(self, *args, **kwargs):
@@ -81,6 +83,7 @@ class JSONAttributes(UserDict):
         if self._schemas is None:
             self.setup_schema()
         self._check_key(key)
+        self._attrs[key].validate(value)
         return super().__setitem__(key, value)
 
     def __delitem__(self, key):

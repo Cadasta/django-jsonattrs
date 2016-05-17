@@ -5,7 +5,6 @@ from .fields import JSONAttributes, JSONAttributeField
 
 def fixup_instance(sender, **kwargs):
     instance = kwargs['instance']
-    print('fixup_instance:', instance)
     for f in instance._meta.fields:
         if isinstance(f, JSONAttributeField):
             fi = getattr(instance, f.name)

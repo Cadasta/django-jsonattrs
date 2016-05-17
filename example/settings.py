@@ -94,5 +94,5 @@ DATABASES = {
 STATIC_URL = '/static/'
 
 
-JSONATTRS_SCHEMA_SELECTORS = (('division', 'division__department'),
+JSONATTRS_SCHEMA_SELECTORS = (('division', ('division', 'department')),
                               'department')

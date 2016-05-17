@@ -50,8 +50,12 @@ class SchemaManager(models.Manager):
         for s in settings.JSONATTRS_SCHEMA_SELECTORS:
             field = s
             if isinstance(s, tuple):
-                field = s[1]
-            selectors = (getattr(instance, field, None),) + selectors
+                selector = instance
+                for step in s[1]:
+                    selector = getattr(selector, step, None)
+            else:
+                selector = getattr(instance, field, None)
+            selectors = selectors + (selector,)
             schemas += list(self.by_selectors(content_type, selectors))
         return schemas
 
@@ -142,7 +146,7 @@ ATTRIBUTE_VALIDATORS = {}
 
 def validator(type, check_valid):
     if not isinstance(type, tuple):
-        type = (type, None)
+        type = (type, '')
     ATTRIBUTE_VALIDATORS[type] = check_valid
 
 
@@ -153,15 +157,16 @@ def re_validate(re):
 int_re = re.compile(r'[-+]?\d+')
 pint_re = re.compile(r'\d+')
 csint_re = re.compile(r'([-+]?\d+)(,[-+]?\d+)*')
-decimal_re = re.compile(r'')
-
+decimal_re = re.compile(r'[-+]?\d+(\.\d+)?')
+bool_re = re.compile(r'true|false|True|False')
 
 validator('BigIntegerField', re_validate(int_re))
 validator('IntegerField', re_validate(int_re))
 validator('SmallIntegerField', re_validate(int_re))
 validator('PositiveIntegerField', re_validate(pint_re))
 validator('PositiveSmallIntegerField', re_validate(pint_re))
-validator('BooleanField', lambda v: isinstance(v, bool))
+validator('BooleanField', lambda v: (isinstance(v, bool) or
+                                     re_validate(bool_re)(v)))
 validator('CharField', lambda v: isinstance(v, str))
 validator('CommaSeparatedIntegerField', re_validate(csint_re))
 
@@ -188,6 +193,9 @@ class Attribute(models.Model):
         unique_together = (('schema', 'index'), ('schema', 'name'))
 
     def validate(self, value):
+        print('validate: value =', value, '(', type(value), ')',
+              '  coarse_type =', self.coarse_type,
+              '  subtype =', self.subtype)
         if self.choices is not None and self.choices != '':
             if value not in self.choices.split(','):
                 raise ValidationError(

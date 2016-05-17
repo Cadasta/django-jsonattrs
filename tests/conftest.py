@@ -14,7 +14,7 @@ def pytest_configure():
             }
         },
         JSONATTRS_SCHEMA_SELECTORS=(
-            ('organization', 'project__organization'),
+            ('organization', ('project', 'organization')),
             'project'
         ),
         SITE_ID=1,

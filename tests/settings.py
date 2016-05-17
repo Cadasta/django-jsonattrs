@@ -10,5 +10,5 @@ DATABASES = {
     }
 }
 
-JSONATTRS_SCHEMA_SELECTORS = (('organization', 'project__organization'),
+JSONATTRS_SCHEMA_SELECTORS = (('organization', ('project', 'organization')),
                               'project')

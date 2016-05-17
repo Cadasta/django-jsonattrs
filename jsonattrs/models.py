@@ -193,9 +193,6 @@ class Attribute(models.Model):
         unique_together = (('schema', 'index'), ('schema', 'name'))
 
     def validate(self, value):
-        print('validate: value =', value, '(', type(value), ')',
-              '  coarse_type =', self.coarse_type,
-              '  subtype =', self.subtype)
         if self.choices is not None and self.choices != '':
             if value not in self.choices.split(','):
                 raise ValidationError(

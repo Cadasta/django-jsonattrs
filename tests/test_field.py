@@ -2,6 +2,8 @@ import pytest
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
+from jsonattrs.fields import JSONAttributes
+
 from .fixtures import create_object_fixtures, create_schema_fixtures
 from .models import Organization, Party, Parcel
 
@@ -38,6 +40,25 @@ class FieldTest(TestCase):
         assert len(tstorg.attrs.attributes) == 1
         assert tstorg.attrs['home_office'] == 'London'
 
+    def test_attributes_key_validation(self):
+        tstparty = Party.objects.create(
+            project=self.fixtures['proj11'],
+            name='Bilbo Baggins',
+            attrs={'gender': 'male', 'owner': True,
+                   'education': 'masters', 'dob': '1954-02-12'}
+        )
+        assert tstparty.attrs['owner'] is True
+        tstparty.attrs['owner'] = False
+        assert tstparty.attrs['owner'] is False
+        with pytest.raises(KeyError):
+            tstparty.attrs['foo'] = 'bar'
+        assert len(tstparty.attrs) == 4
+        del tstparty.attrs['gender']
+        assert len(tstparty.attrs) == 3
+        with pytest.raises(KeyError):
+            del tstparty.attrs['owner']
+        assert len(tstparty.attrs) == 3
+
     def test_attributes_choice_validation(self):
         tstparcel1 = Parcel.objects.create(
             project=self.fixtures['proj11'],
@@ -63,11 +84,3 @@ class FieldTest(TestCase):
                 project=self.fixtures['proj11'],
                 name='Bilbo Baggins', attrs={'owner': 'foo'}
             )
-
-    def test_attributes_dictionary(self):
-        # attrs = JSONAttributes(self.schemata['org-default'],
-        #                        home_office='Igls')
-        pass
-
-    def test_attributes_from_field(self):
-        pass

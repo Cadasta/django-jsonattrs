@@ -121,8 +121,6 @@ def create_schema_fixtures(objs):
         for field, index in zip(schema['fields'], itertools.count(1)):
             subtype = field.get('subtype', '')
             choices = field.get('choices', '')
-            print('FIX:', schema['name'] + ':' + field['name'],
-                  '  choices =', choices)
             default = field.get('default', '')
             required = field.get('required', False)
             omit = field.get('omit', False)

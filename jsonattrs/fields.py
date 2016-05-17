@@ -13,7 +13,16 @@ from .models import Schema
 class JSONAttributes(UserDict):
     def __init__(self, *args, **kwargs):
         self._schemas = None
+        self._instance = None
+        if len(args) == 1 and isinstance(args[0], dict):
+            self.setup_from_dict(args[0])
+            args = []
         super().__init__(*args, **kwargs)
+
+    def setup_from_dict(self, dict):
+        self.setup_schema()
+        for k, v in dict.items():
+            self[k] = v
 
     def setup_schema(self, *args, **kwargs):
         if self._instance is None:
@@ -104,7 +113,7 @@ class JSONAttributeField(JSONField):
         return JSONAttributes(value)
 
     def from_db_value(self, value, expression, connection, context):
-        return JSONAttributes(value)
+        return value
 
     def get_prep_value(self, value):
         if value is not None:

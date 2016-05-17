@@ -14,10 +14,17 @@ class FieldTest(TestCase):
         assert (self.fixtures['org1'].attrs.schemas ==
                 [self.schemata['org-default']])
 
-    def test_attributes_assignment(self):
+    def test_attributes_defaults(self):
         tstorg = Organization.objects.create(name='testorg')
         assert len(tstorg.attrs.attributes) == 1
         assert tstorg.attrs['home_office'] == 'New York'
+
+    def test_attributes_init(self):
+        tstorg = Organization.objects.create(
+            name='testorg', attrs={'home_office': 'London'}
+        )
+        assert len(tstorg.attrs.attributes) == 1
+        assert tstorg.attrs['home_office'] == 'London'
 
     def test_attributes_dictionary(self):
         # attrs = JSONAttributes(self.schemata['org-default'],

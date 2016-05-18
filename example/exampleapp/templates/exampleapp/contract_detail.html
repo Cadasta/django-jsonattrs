@@ -1,4 +1,4 @@
-{% extends "exampleapp/base.html" %}
+{% extends "exampleapp/detail_base.html" %}
 
 {% block title %}Contract details{% endblock %}
 
@@ -7,7 +7,7 @@
 <hr>
 {% endblock %}
 
-{% block content %}
+{% block detail_content %}
 <table>
   <tr>
     <td>ID:</td>
@@ -25,10 +25,14 @@
     <td>Department:</td>
     <td>{{ object.department.name }}</td>
   </tr>
+  <tr>
+    <td>Attributes:</td>
+    <td>{{ object.attrs }}</td>
+  </tr>
 </table>
+{% endblock %}
 
-<br>
-
+{% block detail_links %}
 <a href="{% url 'contract-update' object.pk %}">Edit</a>
 <a href="{% url 'contract-delete' object.pk %}">Delete</a>
 {% endblock %}

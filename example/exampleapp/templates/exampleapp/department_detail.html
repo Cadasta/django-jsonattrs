@@ -1,9 +1,9 @@
 {% extends "exampleapp/detail_base.html" %}
 
-{% block title %}Party details{% endblock %}
+{% block title %}Department details{% endblock %}
 
 {% block back %}
-<a href="{% url 'party-list' %}">Back to party list</a>
+<a href="{% url 'department-list' %}">Back to department list</a>
 <hr>
 {% endblock %}
 
@@ -14,12 +14,8 @@
     <td>{{ object.name }}</td>
   </tr>
   <tr>
-    <td>Department:</td>
-    <td>{{ object.department.name }}</td>
-  </tr>
-  <tr>
     <td>Division:</td>
-    <td>{{ object.department.division.name }}</td>
+    <td>{{ object.division.name }}</td>
   </tr>
   <tr>
     <td>Attributes:</td>
@@ -29,6 +25,5 @@
 {% endblock %}
 
 {% block detail_links %}
-<a href="{% url 'party-update' object.pk %}">Edit</a>
-<a href="{% url 'party-delete' object.pk %}">Delete</a>
+<a href="{% url 'department-delete' object.pk %}">Delete</a>
 {% endblock %}

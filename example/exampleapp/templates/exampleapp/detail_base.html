@@ -1,0 +1,41 @@
+{% extends "exampleapp/base.html" %}
+
+{% block content %}
+{% block detail_content %}{% endblock %}
+
+<hr>
+<em>Attributes</em>
+<br>
+
+<table cellpadding="5">
+  <thead>
+    <tr>
+      <th align="left">Name</th>
+      <th align="left">Long name</th>
+      <th align="left">Coarse type</th>
+      <th align="left">Sub-type</th>
+      <th align="left">Choices</th>
+      <th align="left">Default</th>
+      <th align="left">Required</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in attrs %}
+    <tr>
+      <td>{{ a.name }}</td>
+      <td>{{ a.long_name }}</td>
+      <td>{{ a.coarse_type }}</td>
+      <td>{{ a.subtype }}</td>
+      <td>{{ a.choices }}</td>
+      <td>{{ a.default }}</td>
+      <td>{{ a.required }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<hr>
+
+<br>
+
+{% block detail_links %}{% endblock %}
+{% endblock %}

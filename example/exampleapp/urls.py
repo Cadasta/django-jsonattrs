@@ -3,8 +3,8 @@ from django.conf.urls import url
 from .views import (
     IndexView,
     SchemaList, SchemaCreate, SchemaUpdate, SchemaDelete,
-    DivisionList, DivisionCreate, DivisionDelete,
-    DepartmentList, DepartmentCreate, DepartmentDelete,
+    DivisionList, DivisionDetail, DivisionCreate, DivisionDelete,
+    DepartmentList, DepartmentDetail, DepartmentCreate, DepartmentDelete,
     PartyList, PartyDetail, PartyCreate, PartyUpdate, PartyDelete,
     ContractList, ContractDetail, ContractCreate, ContractUpdate,
     ContractDelete)
@@ -23,12 +23,16 @@ urlpatterns = [
 
     url(r'^division/$', DivisionList.as_view(),
         name='division-list'),
+    url(r'^division/(?P<pk>\d+)/$', DivisionDetail.as_view(),
+        name='division-detail'),
     url(r'^division/add/$', DivisionCreate.as_view(),
         name='division-add'),
     url(r'^division/(?P<pk>\d+)/delete/$', DivisionDelete.as_view(),
         name='division-delete'),
 
     url(r'^department/$', DepartmentList.as_view(), name='department-list'),
+    url(r'^department/(?P<pk>\d+)/$', DepartmentDetail.as_view(),
+        name='department-detail'),
     url(r'^department/add/$', DepartmentCreate.as_view(),
         name='department-add'),
     url(r'^department/(?P<pk>\d+)/delete/$', DepartmentDelete.as_view(),

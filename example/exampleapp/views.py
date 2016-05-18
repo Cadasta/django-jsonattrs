@@ -164,10 +164,26 @@ class SchemaDelete(edit.DeleteView):
 
 # ----------------------------------------------------------------------
 #
+#  ENTITY ATTRIBUTES
+#
+
+class EntityAttributesMixin:
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['attrs'] = context['object'].attrs.attributes.values()
+        return context
+
+
+# ----------------------------------------------------------------------
+#
 #  DIVISIONS
 #
 
 class DivisionList(generic.ListView):
+    model = Division
+
+
+class DivisionDetail(EntityAttributesMixin, generic.DetailView):
     model = Division
 
 
@@ -188,6 +204,10 @@ class DivisionDelete(edit.DeleteView):
 #
 
 class DepartmentList(generic.ListView):
+    model = Department
+
+
+class DepartmentDetail(EntityAttributesMixin, generic.DetailView):
     model = Department
 
 
@@ -223,7 +243,7 @@ class PartyList(generic.ListView):
     model = Party
 
 
-class PartyDetail(generic.DetailView):
+class PartyDetail(EntityAttributesMixin, generic.DetailView):
     model = Party
 
 
@@ -264,7 +284,7 @@ class ContractList(generic.ListView):
     model = Contract
 
 
-class ContractDetail(generic.DetailView):
+class ContractDetail(EntityAttributesMixin, generic.DetailView):
     model = Contract
 
 

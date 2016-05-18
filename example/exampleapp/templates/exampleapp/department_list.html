@@ -11,7 +11,9 @@
 <ul>
   {% for dept in object_list %}
     <li>
-      {{ dept.name }} ({{ dept.division.name }}) [<a href="{% url 'department-delete' dept.pk %}">Delete</a>]
+      <a href="{% url 'department-detail' dept.pk %}">{{ dept.name }}</a>
+      ({{ dept.division.name }})
+      [<a href="{% url 'department-delete' dept.pk %}">Delete</a>]
     </a></li>
   {% endfor %}
 </ul>

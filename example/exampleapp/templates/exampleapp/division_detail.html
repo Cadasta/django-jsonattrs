@@ -1,0 +1,25 @@
+{% extends "exampleapp/detail_base.html" %}
+
+{% block title %}Division details{% endblock %}
+
+{% block back %}
+<a href="{% url 'division-list' %}">Back to division list</a>
+<hr>
+{% endblock %}
+
+{% block detail_content %}
+<table>
+  <tr>
+    <td>Name:</td>
+    <td>{{ object.name }}</td>
+  </tr>
+  <tr>
+    <td>Attributes:</td>
+    <td>{{ object.attrs }}</td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block detail_links %}
+<a href="{% url 'division-delete' object.pk %}">Delete</a>
+{% endblock %}

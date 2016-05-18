@@ -18,10 +18,11 @@ class JSONAttributes(UserDict):
 
     def setup_from_dict(self, dict):
         self.setup_schema()
-        for k, v in dict.items():
-            self._check_key(k)
-            self._attrs[k].validate(v)
-            self[k] = v
+        if dict is not None:
+            for k, v in dict.items():
+                self._check_key(k)
+                self._attrs[k].validate(v)
+                self[k] = v
 
     def setup_schema(self):
         # Determine schemas for model instance containing this field.

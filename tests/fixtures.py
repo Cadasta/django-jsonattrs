@@ -85,6 +85,15 @@ SCHEMATA = [
           'coarse_type': 'BooleanField', 'required': True,
           'default': False}
      ]},
+    {'name': 'party-proj12',
+     'content_type': 'party',
+     'selectors': ('org1', 'proj12'),
+     'fields': [
+         {'name': 'owner', 'long_name': 'Is homeowner',
+          'coarse_type': 'BooleanField', 'required': True,
+          'default': False},
+         {'name': 'dob', 'omit': True}
+     ]},
 
     {'name': 'parcel-default',
      'content_type': 'parcel',
@@ -119,6 +128,8 @@ def create_schema_fixtures(objs):
         )
         res[schema['name']] = schema_obj
         for field, index in zip(schema['fields'], itertools.count(1)):
+            long_name = field.get('long_name', '')
+            coarse_type = field.get('coarse_type', '')
             subtype = field.get('subtype', '')
             choices = field.get('choices', '')
             default = field.get('default', '')
@@ -126,8 +137,8 @@ def create_schema_fixtures(objs):
             omit = field.get('omit', False)
             Attribute.objects.create(
                 schema=schema_obj,
-                name=field['name'], long_name=field['long_name'],
-                coarse_type=field['coarse_type'], subtype=subtype,
+                name=field['name'], long_name=long_name,
+                coarse_type=coarse_type, subtype=subtype,
                 index=index,
                 choices=choices, default=default,
                 required=required, omit=omit

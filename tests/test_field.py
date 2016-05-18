@@ -2,17 +2,17 @@ import pytest
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from jsonattrs.fields import JSONAttributes
-
 from .fixtures import create_object_fixtures, create_schema_fixtures
 from .models import Organization, Party, Parcel
 
 
-class FieldTest(TestCase):
+class FieldTestBase(TestCase):
     def setUp(self):
         self.fixtures = create_object_fixtures()
         self.schemata = create_schema_fixtures(self.fixtures)
 
+
+class FieldSchemaTest(FieldTestBase):
     def test_schema_from_field(self):
         assert (self.fixtures['org1'].attrs.schemas ==
                 [self.schemata['org-default']])
@@ -28,6 +28,25 @@ class FieldTest(TestCase):
         assert 'owner' in tstparty.attrs.attributes
         assert len(tstparty.attrs.attributes) == 4
 
+    def test_schema_composition_with_omit(self):
+        tstparty = Party.objects.create(
+            project=self.fixtures['proj12'],
+            name='Frodo Baggins', attrs={}
+        )
+        assert 'dob' not in tstparty.attrs.attributes
+        assert 'gender' in tstparty.attrs.attributes
+        assert 'education' in tstparty.attrs.attributes
+        assert 'owner' in tstparty.attrs.attributes
+        assert len(tstparty.attrs.attributes) == 3
+        with pytest.raises(KeyError):
+            print(tstparty.attrs['dob'])
+        with pytest.raises(KeyError):
+            tstparty.attrs['dob'] = '1984-05-03'
+        with pytest.raises(KeyError):
+            del tstparty.attrs['dob']
+
+
+class FieldAttributeTest(FieldTestBase):
     def test_attributes_defaults(self):
         tstorg = Organization.objects.create(name='tstorg')
         assert len(tstorg.attrs.attributes) == 1

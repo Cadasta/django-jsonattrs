@@ -1,9 +1,9 @@
 from collections import UserDict, OrderedDict
-import json
+# import json
 
 from psycopg2.extras import Json
 
-from django.core import exceptions
+# from django.core import exceptions
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields import JSONField
 

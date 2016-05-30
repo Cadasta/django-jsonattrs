@@ -14,8 +14,7 @@ def pytest_configure():
             }
         },
         JSONATTRS_SCHEMA_SELECTORS=(
-            ('organization', ('project', 'organization')),
-            'project'
+            'project.organization.name', 'project.name'
         ),
         SITE_ID=1,
         SECRET_KEY='not very secret in tests',
@@ -43,7 +42,22 @@ def pytest_configure():
 
             'jsonattrs',
             'tests',
-        )
+        ),
+        # LOGGING={
+        #     'version': 1,
+        #     'disable_existing_loggers': False,
+        #     'handlers': {
+        #         'console': {
+        #             'class': 'logging.StreamHandler'
+        #         },
+        #     },
+        #     'loggers': {
+        #         'django.db.backends': {
+        #             'handlers': ['console'],
+        #             'level': 'DEBUG'
+        #         }
+        #     }
+        # }
     )
 
     try:

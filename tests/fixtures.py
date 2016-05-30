@@ -72,24 +72,24 @@ SCHEMATA = [
      ]},
     {'name': 'party-org1',
      'content_type': 'party',
-     'selectors': ('org1',),
+     'selectors': ('Organization #1',),
      'fields': [
          {'name': 'education', 'long_name': 'Education level',
           'coarse_type': 'CharField'}
      ]},
     {'name': 'party-proj11',
      'content_type': 'party',
-     'selectors': ('org1', 'proj11'),
+     'selectors': ('Organization #1', 'Project #1.1'),
      'fields': [
-         {'name': 'owner', 'long_name': 'Is homeowner',
+         {'name': 'homeowner', 'long_name': 'Is homeowner',
           'coarse_type': 'BooleanField', 'required': True,
           'default': False}
      ]},
     {'name': 'party-proj12',
      'content_type': 'party',
-     'selectors': ('org1', 'proj12'),
+     'selectors': ('Organization #1', 'Project #1.2'),
      'fields': [
-         {'name': 'owner', 'long_name': 'Is homeowner',
+         {'name': 'homeowner', 'long_name': 'Is homeowner',
           'coarse_type': 'BooleanField', 'required': True,
           'default': False},
          {'name': 'dob', 'omit': True}
@@ -106,25 +106,14 @@ SCHEMATA = [
 ]
 
 
-def named_content_type(name):
-    return ContentType.objects.get(app_label='tests', model=name)
-
-
-def create_schema_fixtures(objs):
+def create_schema_fixtures():
     res = {}
 
     for schema in SCHEMATA:
-        nsel = len(schema['selectors'])
-        if nsel == 0:
-            selectors = ()
-        elif nsel == 1:
-            selectors = (objs[schema['selectors'][0]],)
-        else:
-            selectors = (objs[schema['selectors'][0]],
-                         objs[schema['selectors'][1]])
         schema_obj = Schema.objects.create(
-            content_type=named_content_type(schema['content_type']),
-            selectors=selectors
+            content_type=ContentType.objects.get(app_label='tests',
+                                                 model=schema['content_type']),
+            selectors=schema['selectors']
         )
         res[schema['name']] = schema_obj
         for field, index in zip(schema['fields'], itertools.count(1)):

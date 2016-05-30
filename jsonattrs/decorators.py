@@ -11,8 +11,7 @@ def fixup_instance(sender, **kwargs):
             if not isinstance(fi, JSONAttributes):
                 setattr(instance, f.name, JSONAttributes())
             getattr(instance, f.name)._instance = instance
-            if not isinstance(fi, JSONAttributes):
-                getattr(instance, f.name).setup_from_dict(fi)
+            getattr(instance, f.name).setup_from_dict(fi)
 
 
 def fix_model_for_attributes(cls):

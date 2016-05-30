@@ -39,6 +39,9 @@ class Party(models.Model):
     class Meta:
         ordering = ('project', 'name')
 
+    def __str__(self):
+        return self.name
+
     def get_absolute_url(self):
         return reverse('party-detail', kwargs={'pk': self.pk})
 
@@ -51,6 +54,9 @@ class Parcel(models.Model):
 
     class Meta:
         ordering = ('project', 'address')
+
+    def __str__(self):
+        return self.address
 
     def get_absolute_url(self):
         return reverse('parcel-detail', kwargs={'pk': self.pk})

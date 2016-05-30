@@ -118,7 +118,8 @@ SCHEMATA = [
      'selectors': (),
      'fields': [
          {'name': 'office', 'long_name': 'City of base office',
-          'coarse_type': 'CharField', 'subtype': 'city', 'required': True},
+          'coarse_type': 'CharField', 'subtype': 'city',
+          'required': True, 'default': 'New York'},
          {'name': 'salary', 'long_name': 'Employee salary',
           'coarse_type': 'IntField', 'subtype': 'currency'}
      ]},
@@ -126,30 +127,32 @@ SCHEMATA = [
      'selectors': ('Civil',),
      'fields': [
          {'name': 'digger', 'long_name': 'Can dig!',
-          'coarse_type': 'BooleanField', 'required': True},
+          'coarse_type': 'BooleanField',
+          'required': True, 'default': False},
          {'name': 'certification', 'long_name': 'CEng certification level',
           'coarse_type': 'ChoiceField',
-          'choices': 'None,Apprentice,Journeyman,Master', 'default': 'None',
-          'required': True}
+          'choices': 'None,Apprentice,Journeyman,Master',
+          'required': True, 'default': 'None'}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil', 'Bridges'),
      'fields': [
          {'name': 'vertigo', 'long_name': 'Gets vertigo',
-          'coarse_type': 'BooleanField', 'required': True}
+          'coarse_type': 'BooleanField', 'required': True, 'default': False}
      ]},
     {'content_type': 'party',
      'selectors': ('Marine',),
      'fields': [
          {'name': 'aquatic', 'long_name': 'Can breathe underwater!',
-          'coarse_type': 'BooleanField', 'required': True}
+          'coarse_type': 'BooleanField', 'required': True, 'default': False}
      ]},
 
     {'content_type': 'contract',
      'selectors': (),
      'fields': [
          {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
-          'coarse_type': 'CharField', 'subtype': 'country', 'required': True}
+          'coarse_type': 'CharField', 'subtype': 'country',
+          'required': True, 'default': 'US'}
      ]}
 ]
 

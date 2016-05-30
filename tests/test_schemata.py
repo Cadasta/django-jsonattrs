@@ -1,8 +1,8 @@
 import pytest
 from django.test import TestCase
-from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 
-from jsonattrs.models import Schema, SchemaSelector
+from jsonattrs.models import Schema
 
 from .fixtures import create_object_fixtures
 
@@ -12,54 +12,57 @@ class SchemataTest(TestCase):
         self.fixtures = create_object_fixtures()
 
     def test_schema_str(self):
-        schema = Schema.objects.create(content_type=self.fixtures['party_t'])
-        assert str(schema) == '<Schema #{}: party>'.format(schema.pk)
-        assert repr(schema) == '<Schema #{}: party>'.format(schema.pk)
-
-    def test_schema_selector_str(self):
-        schema = Schema.objects.create(content_type=self.fixtures['party_t'])
-        selector = SchemaSelector.objects.create(
-            schema=schema, index=1, selector=self.fixtures['org1']
+        org = self.fixtures['org1'].name
+        prj = self.fixtures['proj11'].name
+        schema1 = Schema.objects.create(
+            content_type=self.fixtures['party_t'],
+            selectors=()
         )
-        cmp = '<SchemaSelector #{} (1/1): {}>'.format(
-            selector.pk, self.fixtures['org1'].name
+        assert str(schema1) == '<Schema #{}: party+()>'.format(schema1.pk)
+        assert repr(schema1) == '<Schema #{}: party+()>'.format(schema1.pk)
+        schema2 = Schema.objects.create(
+            content_type=self.fixtures['party_t'],
+            selectors=(org,)
         )
-        assert str(selector) == cmp
-        assert repr(selector) == cmp
+        assert (str(schema2) ==
+                "<Schema #{}: party+('{}',)>".format(schema2.pk, org))
+        assert (repr(schema2) ==
+                "<Schema #{}: party+('{}',)>".format(schema2.pk, org))
+        schema3 = Schema.objects.create(
+            content_type=self.fixtures['party_t'],
+            selectors=(org, prj)
+        )
+        assert (str(schema3) ==
+                "<Schema #{}: party+('{}', '{}')>".format(schema3.pk,
+                                                          org, prj))
+        assert (repr(schema3) ==
+                "<Schema #{}: party+('{}', '{}')>".format(schema3.pk,
+                                                          org, prj))
 
     def test_manual_schema_setup(self):
         schema = Schema.objects.create(
             content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
+            selectors=(self.fixtures['org1'].name,
+                       self.fixtures['proj11'].name)
         )
-        assert (list(map(lambda ss: ss.selector, (schema.selectors.all()))) ==
-                [self.fixtures['org1'], self.fixtures['proj11']])
+        assert schema.content_type == self.fixtures['party_t']
+        assert tuple(schema.selectors) == (self.fixtures['org1'].name,
+                                           self.fixtures['proj11'].name)
 
     def _create_test_schemata(self):
-        s1 = Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
-        )
-        s2 = Schema.objects.create(
-            content_type=self.fixtures['parcel_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
-        )
-        s3 = Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj12'])
-        )
-        s4 = Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org2'], self.fixtures['proj21'])
-        )
-        s5 = Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org2'],)
-        )
-        s6 = Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=()
-        )
+        party = self.fixtures['party_t']
+        parcel = self.fixtures['parcel_t']
+        o1 = self.fixtures['org1'].name
+        o2 = self.fixtures['org2'].name
+        p11 = self.fixtures['proj11'].name
+        p12 = self.fixtures['proj12'].name
+        p21 = self.fixtures['proj21'].name
+        s1 = Schema.objects.create(content_type=party, selectors=(o1, p11))
+        s2 = Schema.objects.create(content_type=parcel, selectors=(o1, p11))
+        s3 = Schema.objects.create(content_type=party, selectors=(o1, p12))
+        s4 = Schema.objects.create(content_type=party, selectors=(o2, p21))
+        s5 = Schema.objects.create(content_type=party, selectors=(o2,))
+        s6 = Schema.objects.create(content_type=party, selectors=())
         return s1, s2, s3, s4, s5, s6
 
     def test_schema_unique_together_ok(self):
@@ -67,45 +70,42 @@ class SchemataTest(TestCase):
             s.full_clean()
 
     def test_schema_unique_together_overlap(self):
-        Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
-        )
-        test_schema1 = Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
-        )
-        with pytest.raises(ValidationError):
-            test_schema1.full_clean()
-        Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'],)
-        ).full_clean()
-        Schema.objects.create(
-            content_type=self.fixtures['party_t'],
-            selectors=()
-        ).full_clean()
+        p = self.fixtures['party_t']
+        o1 = self.fixtures['org1'].name
+        p11 = self.fixtures['proj11'].name
+        Schema.objects.create(content_type=p, selectors=(o1, p11)).full_clean()
+        Schema.objects.create(content_type=p, selectors=(o1,)).full_clean()
+        Schema.objects.create(content_type=p, selectors=()).full_clean()
+        with pytest.raises(IntegrityError):
+            Schema.objects.create(content_type=p, selectors=(o1, p11))
 
     def test_schema_deletion(self):
+        before_count = Schema.objects.count()
         test_schema = Schema.objects.create(
             content_type=self.fixtures['party_t'],
-            selectors=(self.fixtures['org1'], self.fixtures['proj11'])
+            selectors=(self.fixtures['org1'].name,
+                       self.fixtures['proj11'].name)
         )
         test_schema.delete()
-        assert SchemaSelector.objects.count() == 0
+        assert Schema.objects.count() == before_count
 
-    def test_schema_by_selectors(self):
+    def test_schema_lookup(self):
         s1, s2, s3, s4, s5, s6 = self._create_test_schemata()
         party = self.fixtures['party_t']
         parcel = self.fixtures['parcel_t']
-        org1 = self.fixtures['org1']
-        org2 = self.fixtures['org2']
-        prj11 = self.fixtures['proj11']
-        prj12 = self.fixtures['proj12']
-        prj21 = self.fixtures['proj21']
-        assert list(Schema.objects.by_selectors(party, (org1, prj11))) == [s1]
-        assert list(Schema.objects.by_selectors(parcel, (org1, prj11))) == [s2]
-        assert list(Schema.objects.by_selectors(party, (org1, prj12))) == [s3]
-        assert list(Schema.objects.by_selectors(party, (org2, prj21))) == [s4]
-        assert list(Schema.objects.by_selectors(party, (org2,))) == [s5]
-        assert list(Schema.objects.by_selectors(party, ())) == [s6]
+        o1 = self.fixtures['org1'].name
+        o2 = self.fixtures['org2'].name
+        p11 = self.fixtures['proj11'].name
+        p12 = self.fixtures['proj12'].name
+        p21 = self.fixtures['proj21'].name
+
+        def check(ct, sels, val):
+            assert list(Schema.objects.filter(content_type=ct,
+                                              selectors=sels)) == [val]
+
+        check(party, (o1, p11), s1)
+        check(parcel, (o1, p11), s2)
+        check(party, (o1, p12), s3)
+        check(party, (o2, p21), s4)
+        check(party, (o2,), s5)
+        check(party, (), s6)

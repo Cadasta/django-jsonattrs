@@ -3,13 +3,13 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 
 from .fixtures import create_object_fixtures, create_schema_fixtures
-from .models import Organization, Party, Parcel
+from .models import Organization, Project, Party, Parcel
 
 
 class FieldTestBase(TestCase):
     def setUp(self):
+        self.schemata = create_schema_fixtures()
         self.fixtures = create_object_fixtures()
-        self.schemata = create_schema_fixtures(self.fixtures)
 
 
 class FieldSchemaTest(FieldTestBase):
@@ -25,7 +25,7 @@ class FieldSchemaTest(FieldTestBase):
         assert 'dob' in tstparty.attrs.attributes
         assert 'gender' in tstparty.attrs.attributes
         assert 'education' in tstparty.attrs.attributes
-        assert 'owner' in tstparty.attrs.attributes
+        assert 'homeowner' in tstparty.attrs.attributes
         assert len(tstparty.attrs.attributes) == 4
 
     def test_schema_composition_with_omit(self):
@@ -36,7 +36,7 @@ class FieldSchemaTest(FieldTestBase):
         assert 'dob' not in tstparty.attrs.attributes
         assert 'gender' in tstparty.attrs.attributes
         assert 'education' in tstparty.attrs.attributes
-        assert 'owner' in tstparty.attrs.attributes
+        assert 'homeowner' in tstparty.attrs.attributes
         assert len(tstparty.attrs.attributes) == 3
         with pytest.raises(KeyError):
             print(tstparty.attrs['dob'])
@@ -63,19 +63,19 @@ class FieldAttributeTest(FieldTestBase):
         tstparty = Party.objects.create(
             project=self.fixtures['proj11'],
             name='Bilbo Baggins',
-            attrs={'gender': 'male', 'owner': True,
+            attrs={'gender': 'male', 'homeowner': True,
                    'education': 'masters', 'dob': '1954-02-12'}
         )
-        assert tstparty.attrs['owner'] is True
-        tstparty.attrs['owner'] = False
-        assert tstparty.attrs['owner'] is False
+        assert tstparty.attrs['homeowner'] is True
+        tstparty.attrs['homeowner'] = False
+        assert tstparty.attrs['homeowner'] is False
         with pytest.raises(KeyError):
             tstparty.attrs['foo'] = 'bar'
         assert len(tstparty.attrs) == 4
         del tstparty.attrs['gender']
         assert len(tstparty.attrs) == 3
         with pytest.raises(KeyError):
-            del tstparty.attrs['owner']
+            del tstparty.attrs['homeowner']
         assert len(tstparty.attrs) == 3
 
     def test_attributes_choice_validation(self):
@@ -94,12 +94,41 @@ class FieldAttributeTest(FieldTestBase):
     def test_attributes_other_validation(self):
         tstparty1 = Party.objects.create(
             project=self.fixtures['proj11'],
-            name='Bilbo Baggins', attrs={'owner': True}
+            name='Bilbo Baggins', attrs={'homeowner': True}
         )
         assert len(tstparty1.attrs.attributes) == 4
-        assert tstparty1.attrs['owner'] is True
+        assert tstparty1.attrs['homeowner'] is True
         with pytest.raises(ValidationError):
             Party.objects.create(
                 project=self.fixtures['proj11'],
-                name='Bilbo Baggins', attrs={'owner': 'foo'}
+                name='Bilbo Baggins', attrs={'homeowner': 'foo'}
             )
+
+    def test_attributes_lookup_keys(self):
+        assert Party.objects.count() == 45
+        assert Party.objects.filter(attrs__has_key='homeowner').count() == 10
+
+    def test_attributes_lookup_dict(self):
+        assert Party.objects.count() == 45
+        assert Party.objects.filter(attrs={'homeowner': 'False'}).count() == 10
+
+
+class FieldDbTest(FieldTestBase):
+    def test_check_fixtures(self):
+        assert Organization.objects.count() == 3
+        assert Project.objects.count() == 9
+        assert all(org.project_set.count() == 3
+                   for org in Organization.objects.all())
+        assert Parcel.objects.count() == 45
+        assert all(prj.parcel_set.count() == 5
+                   for prj in Project.objects.all())
+        assert Party.objects.count() == 45
+        assert all(prj.party_set.count() == 5
+                   for prj in Project.objects.all())
+
+    def test_set_attribute_and_save(self):
+        prj = Project.objects.get(name='Project #1.1')
+        prj.attrs['head'] = 'Jim Jimson'
+        prj.save()
+        prj_check = Project.objects.get(name='Project #1.1')
+        assert prj_check.attrs['head'] == 'Jim Jimson'

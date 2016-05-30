@@ -11,18 +11,41 @@ from .settings import FIELD_TYPES
 
 
 class SchemaManager(models.Manager):
+    cache = dict()
+
+    @classmethod
+    def invalidate_cache(cls):
+        cls.cache = dict()
+
     def from_instance(self, instance):
-        base_schemas = self.filter(
-            content_type=ContentType.objects.get_for_model(instance)
-        )
-        selectors = ()
-        schemas = list(base_schemas.filter(selectors=()))
+        print('from_instance:', instance)
+
+        # Build full list of selectors from instance.
+        selectors = []
         for s in settings.JSONATTRS_SCHEMA_SELECTORS:
             selector = instance
             for step in s.split('.'):
                 selector = getattr(selector, step, None)
-            selectors = selectors + (selector,)
-            schemas += list(base_schemas.filter(selectors=selectors))
+            selectors.append(selector)
+        selectors = tuple(selectors)
+
+        # Look for schema list in cache, keyed by content type and
+        # selector list.
+        content_type = ContentType.objects.get_for_model(instance)
+        key = (content_type, selectors)
+        print('key =', key)
+        if key in self.cache:
+            print('CACHE HIT')
+            return self.cache[key]
+
+        # Not in cache: build schema list using increasing selector
+        # sequences.
+        print('CACHE MISS')
+        base_schemas = self.filter(content_type=content_type)
+        schemas = []
+        for i in range(len(selectors) + 1):
+            schemas += list(base_schemas.filter(selectors=selectors[:i]))
+        self.cache[key] = schemas
         return schemas
 
 

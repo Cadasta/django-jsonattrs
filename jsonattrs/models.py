@@ -67,6 +67,10 @@ class Schema(models.Model):
     def __repr__(self):
         return str(self)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        SchemaManager.invalidate_cache()
+
     objects = SchemaManager()
 
 

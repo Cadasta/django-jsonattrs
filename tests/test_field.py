@@ -2,7 +2,6 @@ import pytest
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from jsonattrs.models import SchemaManager
 from .fixtures import create_object_fixtures, create_schema_fixtures
 from .models import Organization, Project, Party, Parcel
 
@@ -11,9 +10,6 @@ class FieldTestBase(TestCase):
     def setUp(self):
         self.schemata = create_schema_fixtures()
         self.fixtures = create_object_fixtures()
-
-    def tearDown(self):
-        SchemaManager.invalidate_cache()
 
 
 class FieldSchemaTest(FieldTestBase):

@@ -49,6 +49,7 @@ class Party(models.Model):
 @fix_model_for_attributes
 class Parcel(models.Model):
     project = models.ForeignKey(Project)
+    type = models.CharField(max_length=20)
     address = models.CharField(max_length=200)
     attrs = JSONAttributeField()
 

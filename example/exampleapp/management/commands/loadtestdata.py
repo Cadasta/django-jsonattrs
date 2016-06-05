@@ -5,14 +5,16 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 
 from jsonattrs.models import Schema, Attribute
-from exampleapp.models import Division, Department, Party
+from exampleapp.models import Division, Department, Party, Contract
 
 
 DATA = [
     {'type': 'division',
+     'first_pass': True,
      'args': {'name': 'Civil'},
      'sub_objects': [
          {'type': 'department',
+          'first_pass': True,
           'args': {'name': 'Buildings'},
           'sub_objects': [
               {'type': 'party', 'args': {'name': 'Ian'}},
@@ -22,6 +24,7 @@ DATA = [
               {'type': 'contract', 'args': {'responsible': 'Rita'}}
           ]},
          {'type': 'department',
+          'first_pass': True,
           'args': {'name': 'Bridges'},
           'sub_objects': [
               {'type': 'party', 'args': {'name': 'Frank'}},
@@ -30,6 +33,7 @@ DATA = [
               {'type': 'contract', 'args': {'responsible': 'Boris'}},
           ]},
          {'type': 'department',
+          'first_pass': True,
           'args': {'name': 'Tunnels'},
           'sub_objects': [
               {'type': 'party', 'args': {'name': 'Kate'}},
@@ -40,9 +44,11 @@ DATA = [
           ]}
      ]},
     {'type': 'division',
+     'first_pass': True,
      'args': {'name': 'Marine'},
      'sub_objects': [
          {'type': 'department',
+          'first_pass': True,
           'args': {'name': 'Platforms'},
           'sub_objects': [
               {'type': 'party', 'args': {'name': 'Steve Squid'}},
@@ -52,6 +58,7 @@ DATA = [
               {'type': 'contract', 'args': {'responsible': 'Nellie Nautilus'}}
           ]},
          {'type': 'department',
+          'first_pass': True,
           'args': {'name': 'Pipelines'},
           'sub_objects': [
               {'type': 'party', 'args': {'name': 'Annie Angelfish'}},
@@ -91,15 +98,37 @@ def create_object(typ, args, parent_typ, parent_obj):
         return typ.model_class().objects.create(**args)
 
 
-def process_data(action, data, parent_typ=None, parent_obj=None):
-    for obj in data:
-        typ = named_content_type(obj['type'])
-        new_obj = action(typ, obj['args'], parent_typ, parent_obj)
-        if 'sub_objects' in obj:
-            process_data(action, obj['sub_objects'], obj['type'], new_obj)
+def do_process_data(first_pass, data, parent_typ=None, parent_obj=None):
+    for o in data:
+        typ = named_content_type(o['type'])
+        opass = o.get('first_pass', False)
+        newo = None
+        if first_pass:
+            if opass:
+                newo = create_object(typ, o['args'], parent_typ, parent_obj)
+                if 'sub_objects' in o:
+                    do_process_data(first_pass, o['sub_objects'],
+                                    o['type'], newo)
+        else:
+            if not opass:
+                newo = create_object(typ, o['args'], parent_typ, parent_obj)
+            else:
+                try:
+                    newo = typ.model_class().objects.get(**o['args'])
+                except:
+                    pass
+            if 'sub_objects' in o:
+                do_process_data(first_pass, o['sub_objects'], o['type'], newo)
 
 
-SCHEMATA = [
+def create_objects():
+    create_schemata(DEFAULT_SCHEMATA)
+    do_process_data(True, DATA)
+    create_schemata(SPECIFIC_SCHEMATA)
+    do_process_data(False, DATA)
+
+
+DEFAULT_SCHEMATA = [
     {'content_type': 'division',
      'selectors': (),
      'fields': [
@@ -123,6 +152,18 @@ SCHEMATA = [
          {'name': 'salary', 'long_name': 'Employee salary',
           'coarse_type': 'IntField', 'subtype': 'currency'}
      ]},
+
+    {'content_type': 'contract',
+     'selectors': (),
+     'fields': [
+         {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
+          'coarse_type': 'CharField', 'subtype': 'country',
+          'required': True, 'default': 'US'}
+     ]}
+]
+
+
+SPECIFIC_SCHEMATA = [
     {'content_type': 'party',
      'selectors': ('Civil',),
      'fields': [
@@ -145,14 +186,6 @@ SCHEMATA = [
      'fields': [
          {'name': 'aquatic', 'long_name': 'Can breathe underwater!',
           'coarse_type': 'BooleanField', 'required': True, 'default': False}
-     ]},
-
-    {'content_type': 'contract',
-     'selectors': (),
-     'fields': [
-         {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
-          'coarse_type': 'CharField', 'subtype': 'country',
-          'required': True, 'default': 'US'}
      ]}
 ]
 
@@ -172,41 +205,48 @@ def selectors_from_names(selector_names):
         return ()
 
 
-def delete_schemata():
-    for schema in SCHEMATA:
-        try:
-            print('Deleting schema:',
-                  schema['content_type'], schema['selectors'])
-            Schema.objects.by_selectors(
-                content_type=named_content_type(schema['content_type']),
-                selectors=selectors_from_names(schema['selectors'])
-            ).delete()
-        except ObjectDoesNotExist:
-            print('Failed deleting schema:', schema)
-            pass
-
-
-def create_schemata():
-    for schema in SCHEMATA:
-        print('Creating schema:', schema['content_type'], schema['selectors'])
-        schema_obj = Schema.objects.create(
+def delete_schema(schema):
+    try:
+        print('Deleting schema:',
+              schema['content_type'], schema['selectors'])
+        Schema.objects.get(
             content_type=named_content_type(schema['content_type']),
             selectors=selectors_from_names(schema['selectors'])
+        ).delete()
+    except ObjectDoesNotExist:
+        print('Failed deleting schema:', schema)
+        pass
+
+
+def delete_schemata(schemata):
+    for schema in schemata:
+        delete_schema(schema)
+
+
+def create_schema(schema):
+    print('Creating schema:', schema['content_type'], schema['selectors'])
+    schema_obj = Schema.objects.create(
+        content_type=named_content_type(schema['content_type']),
+        selectors=selectors_from_names(schema['selectors'])
+    )
+    for field, index in zip(schema['fields'], itertools.count(1)):
+        subtype = field.get('subtype', '')
+        choices = field.get('choices', '')
+        default = field.get('default', '')
+        required = field.get('required', False)
+        omit = field.get('omit', False)
+        Attribute.objects.create(
+            schema=schema_obj,
+            name=field['name'], long_name=field['long_name'],
+            coarse_type=field['coarse_type'], subtype=subtype,
+            index=index, choices=choices, default=default,
+            required=required, omit=omit
         )
-        for field, index in zip(schema['fields'], itertools.count(1)):
-            subtype = field.get('subtype', '')
-            choices = field.get('choices', '')
-            default = field.get('default', '')
-            required = field.get('required', False)
-            omit = field.get('omit', False)
-            Attribute.objects.create(
-                schema=schema_obj,
-                name=field['name'], long_name=field['long_name'],
-                coarse_type=field['coarse_type'], subtype=subtype,
-                index=index,
-                choices=choices, default=default,
-                required=required, omit=omit
-            )
+
+
+def create_schemata(schemata):
+    for schema in schemata:
+        create_schema(schema)
 
 
 class Command(BaseCommand):
@@ -220,8 +260,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['delete']:
-            delete_schemata()
-            process_data(delete_object, DATA)
+            Schema.objects.all().delete()
+            Division.objects.all().delete()
+            Department.objects.all().delete()
+            Party.objects.all().delete()
+            Contract.objects.all().delete()
         else:
-            process_data(create_object, DATA)
-            create_schemata()
+            create_objects()

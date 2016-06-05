@@ -4,45 +4,13 @@ from django.contrib.contenttypes.models import ContentType
 
 from jsonattrs.models import Schema, Attribute
 
+from .models import Organization, Project
 from .factories import (
     OrganizationFactory, ProjectFactory, PartyFactory, ParcelFactory
 )
 
 
-def create_object_fixtures():
-    res = {}
-
-    for iorg in range(1, 4):
-        org = OrganizationFactory.create(name='Organization #{}'.format(iorg))
-        res['org{}'.format(iorg)] = org
-
-        for iprj in range(1, 4):
-            proj = ProjectFactory.create(
-                name='Project #{}.{}'.format(iorg, iprj),
-                organization=org
-            )
-            res['proj{}{}'.format(iorg, iprj)] = proj
-
-            for ient in range(1, 6):
-                parcel = ParcelFactory.create(
-                    address='Parcel #{}.{}.{}'.format(iorg, iprj, ient),
-                    project=proj
-                )
-                res['parcel{}{}{}'.format(iorg, iprj, ient)] = parcel
-
-                party = PartyFactory.create(
-                    name='Party #{}.{}.{}'.format(iorg, iprj, ient),
-                    project=proj
-                )
-                res['party{}{}{}'.format(iorg, iprj, ient)] = party
-
-    for m in ['organization', 'project', 'party', 'parcel']:
-        res[m + '_t'] = ContentType.objects.get(app_label='tests', model=m)
-
-    return res
-
-
-SCHEMATA = [
+DEFAULT_SCHEMATA = [
     {'name': 'org-default',
      'content_type': 'organization',
      'selectors': (),
@@ -70,6 +38,18 @@ SCHEMATA = [
          {'name': 'gender', 'long_name': 'Gender',
           'coarse_type': 'CharField'}
      ]},
+
+    {'name': 'parcel-default',
+     'content_type': 'parcel',
+     'selectors': (),
+     'fields': [
+         {'name': 'quality', 'long_name': 'Quality of parcel geomeatry',
+          'coarse_type': 'CharField', 'default': 'none', 'required': True,
+          'choices': 'none,text,point,polygon_low,polygon_high'}
+     ]}
+]
+
+SPECIFIC_SCHEMATA = [
     {'name': 'party-org1',
      'content_type': 'party',
      'selectors': ('Organization #1',),
@@ -93,27 +73,81 @@ SCHEMATA = [
           'coarse_type': 'BooleanField', 'required': True,
           'default': False},
          {'name': 'dob', 'omit': True}
-     ]},
-
-    {'name': 'parcel-default',
-     'content_type': 'parcel',
-     'selectors': (),
-     'fields': [
-         {'name': 'quality', 'long_name': 'Quality of parcel geomeatry',
-          'coarse_type': 'CharField', 'default': 'none', 'required': True,
-          'choices': 'none,text,point,polygon_low,polygon_high'}
      ]}
 ]
 
 
-def create_schema_fixtures():
+def create_fixtures(do_schemas=True):
+    objres = {}
+    schres = {}
+
+    if do_schemas:
+        schres.update(create_schema_fixtures(DEFAULT_SCHEMATA))
+
+    for iorg in range(1, 4):
+        org = OrganizationFactory.create(name='Organization #{}'.format(iorg))
+        objres['org{}'.format(iorg)] = org
+
+        for iprj in range(1, 4):
+            proj = ProjectFactory.create(
+                name='Project #{}.{}'.format(iorg, iprj),
+                organization=org
+            )
+            objres['proj{}{}'.format(iorg, iprj)] = proj
+
+    if do_schemas:
+        schres.update(create_schema_fixtures(SPECIFIC_SCHEMATA))
+
+    for iorg in range(1, 4):
+        org = Organization.objects.get(name='Organization #{}'.format(iorg))
+
+        for iprj in range(1, 4):
+            proj = Project.objects.get(
+                name='Project #{}.{}'.format(iorg, iprj)
+            )
+
+            for ient in range(1, 6):
+                parcel = ParcelFactory.create(
+                    address='Parcel #{}.{}.{}'.format(iorg, iprj, ient),
+                    project=proj
+                )
+                objres['parcel{}{}{}'.format(iorg, iprj, ient)] = parcel
+
+                party = PartyFactory.create(
+                    name='Party #{}.{}.{}'.format(iorg, iprj, ient),
+                    project=proj
+                )
+                objres['party{}{}{}'.format(iorg, iprj, ient)] = party
+
+    for m in ['organization', 'project', 'party', 'parcel']:
+        objres[m + '_t'] = ContentType.objects.get(app_label='tests', model=m)
+
+    if do_schemas:
+        return objres, schres
+    else:
+        return objres
+
+
+def selector_lookup(s):
+    if s.startswith('Organization'):
+        return Organization.objects.get(name=s).pk
+    elif s.startswith('Project'):
+        return Project.objects.get(name=s).pk
+    else:
+        raise ValueError('Oops.  Bad selector in schema fixture!')
+
+
+def create_schema_fixtures(schemata):
     res = {}
 
-    for schema in SCHEMATA:
+    for schema in schemata:
+        selectors = []
+        for s in schema['selectors']:
+            selectors.append(selector_lookup(s))
         schema_obj = Schema.objects.create(
             content_type=ContentType.objects.get(app_label='tests',
                                                  model=schema['content_type']),
-            selectors=schema['selectors']
+            selectors=tuple(selectors)
         )
         res[schema['name']] = schema_obj
         for field, index in zip(schema['fields'], itertools.count(1)):

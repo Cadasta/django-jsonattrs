@@ -55,12 +55,9 @@ class SchemaList(generic.ListView):
         context = super().get_context_data(*args, **kwargs)
         table_data = []
         for schema in context['object_list']:
-            div_selector = None
-            if schema.selectors.count() > 0:
-                div_selector = schema.selectors.get(index=1).selector.name
-            dept_selector = None
-            if schema.selectors.count() > 1:
-                dept_selector = schema.selectors.get(index=2).selector.name
+            nsel = len(schema.selectors)
+            div_selector = schema.selectors[0] if nsel > 0 else None
+            dept_selector = schema.selectors[1] if nsel > 1 else None
             table_data.append({'content_type': schema.content_type,
                                'division': div_selector,
                                'department': dept_selector,
@@ -76,10 +73,12 @@ class SchemaMixin:
     def get_initial(self):
         obj = self.get_object()
         if obj is not None:
-            sels = obj.selectors.all()
+            sels = obj.selectors
             return {'content_type': obj.content_type,
-                    'division': sels[0].selector if len(sels) > 0 else None,
-                    'department': sels[1].selector if len(sels) > 1 else None}
+                    'division': (Division.objects.get(name=sels[0])
+                                 if len(sels) > 0 else None),
+                    'department': (Department.objects.get(name=sels[1])
+                                   if len(sels) > 1 else None)}
         else:
             return {}
 
@@ -142,7 +141,8 @@ class SchemaCreate(SchemaMixin, generic.FormView):
 
     def set_up_schema(self, content_type, selectors):
         self.schema = Schema.objects.create(
-            content_type=content_type, selectors=selectors
+            content_type=content_type,
+            selectors=list(map(lambda s: s.name, selectors))
         )
 
 
@@ -154,7 +154,10 @@ class SchemaUpdate(SchemaMixin, generic.FormView):
                 else Schema.objects.get(pk=self.kwargs['pk']))
 
     def set_up_schema(self, content_type, selectors):
-        self.schema = Schema.objects.by_selectors(content_type, selectors)[0]
+        self.schema = Schema.objects.get(
+            content_type=content_type,
+            selectors=list(map(lambda s: s.name, selectors))
+        )
 
 
 class SchemaDelete(edit.DeleteView):

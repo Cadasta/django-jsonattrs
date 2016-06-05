@@ -13,9 +13,15 @@ def pytest_configure():
                 'HOST': 'localhost',
             }
         },
-        JSONATTRS_SCHEMA_SELECTORS=(
-            'project.organization.name', 'project.name'
-        ),
+        # JSONATTRS_SCHEMA_SELECTORS=(
+        #     'project.organization.name', 'project.name'
+        # ),
+        JSONATTRS_SCHEMA_SELECTORS={
+            'tests.organization': (),
+            'tests.project': ('organization.pk',),
+            'tests.party': ('project.organization.pk', 'project.pk'),
+            'tests.parcel': ('project.organization.pk', 'project.pk', 'type')
+        },
         SITE_ID=1,
         SECRET_KEY='not very secret in tests',
         USE_I18N=True,

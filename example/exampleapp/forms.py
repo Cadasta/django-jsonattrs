@@ -45,22 +45,3 @@ class SchemaForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        content_type = cleaned_data.get('content_type')
-        division = cleaned_data.get('division')
-        department = cleaned_data.get('department')
-        check = ()
-        if division is not None:
-            division = Division.objects.get(name=division)
-            check = (division,)
-            if department is not None:
-                department = Department.objects.get(name=department)
-                check = (division, department)
-        if self.instance is not None:
-            Schema.check_unique_together(
-                content_type, check, exclude=self.instance
-            )
-        else:
-            Schema.check_unique_together(content_type, check)

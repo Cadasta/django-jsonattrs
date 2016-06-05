@@ -4,12 +4,12 @@ from django.db.utils import IntegrityError
 
 from jsonattrs.models import Schema
 
-from .fixtures import create_object_fixtures
+from .fixtures import create_fixtures
 
 
 class SchemataTest(TestCase):
     def setUp(self):
-        self.fixtures = create_object_fixtures()
+        self.fixtures = create_fixtures(False)
 
     def test_schema_str(self):
         org = self.fixtures['org1'].name

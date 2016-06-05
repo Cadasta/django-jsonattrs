@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import re
 
 from django.db import models
@@ -6,47 +7,74 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
-
-from .settings import FIELD_TYPES
+from django.db.models import (
+    BooleanField,
+    CharField,
+    CommaSeparatedIntegerField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    EmailField,
+    FloatField,
+    NullBooleanField,
+    SlugField,
+    TimeField,
+    URLField,
+    BigIntegerField,
+    IntegerField,
+    PositiveIntegerField,
+    PositiveSmallIntegerField,
+    SmallIntegerField
+)
 
 
 class SchemaManager(models.Manager):
     cache = dict()
+    content_type_to_selectors = dict()
 
     @classmethod
     def invalidate_cache(cls):
         cls.cache = dict()
 
-    def from_instance(self, instance):
-        print('from_instance:', instance)
+    def lookup(self, instance=None, content_type=None, selectors=None):
+        if instance is not None and content_type is None:
+            content_type = ContentType.objects.get_for_model(instance)
 
-        # Build full list of selectors from instance.
-        selectors = []
-        for s in settings.JSONATTRS_SCHEMA_SELECTORS:
-            selector = instance
-            for step in s.split('.'):
-                selector = getattr(selector, step, None)
-            selectors.append(selector)
+        if selectors is None and instance is not None:
+            # Lazily pre-process per-content type selector definitions.
+            if len(self.content_type_to_selectors) == 0:
+                for k, v in settings.JSONATTRS_SCHEMA_SELECTORS.items():
+                    a, m = k.split('.')
+                    self.content_type_to_selectors[
+                        ContentType.objects.get(app_label=a, model=m)
+                    ] = v
+
+            # Build full list of selectors from instance.
+            selectors = []
+            for s in self.content_type_to_selectors[content_type]:
+                selector = instance
+                for step in s.split('.'):
+                    selector = getattr(selector, step, None)
+                selectors.append(str(selector))
         selectors = tuple(selectors)
 
         # Look for schema list in cache, keyed by content type and
         # selector list.
-        content_type = ContentType.objects.get_for_model(instance)
         key = (content_type, selectors)
-        print('key =', key)
         if key in self.cache:
-            print('CACHE HIT')
             return self.cache[key]
 
         # Not in cache: build schema list using increasing selector
         # sequences.
-        print('CACHE MISS')
         base_schemas = self.filter(content_type=content_type)
         schemas = []
         for i in range(len(selectors) + 1):
             schemas += list(base_schemas.filter(selectors=selectors[:i]))
         self.cache[key] = schemas
         return schemas
+
+    def from_instance(self, instance):
+        return self.lookup(instance=instance)
 
 
 class Schema(models.Model):
@@ -74,7 +102,48 @@ class Schema(models.Model):
     objects = SchemaManager()
 
 
-FIELD_TYPE_CHOICES = [(field, field) for field in FIELD_TYPES]
+def compose_schemas(*schemas):
+    # Extract schema attributes, names of required attributes and
+    # names of attributes with defaults, composing schemas.
+    sattrs = [s.attributes.all() for s in schemas]
+    attrs = OrderedDict()
+    for sas in sattrs:
+        for sa in sas:
+            if sa.omit:
+                if sa.name in attrs:
+                    del attrs[sa.name]
+            else:
+                attrs[sa.name] = sa
+    required_attrs = {n for n, a in attrs.items() if a.required}
+    default_attrs = {n for n, a in attrs.items() if a.default is not None}
+
+    return attrs, required_attrs, default_attrs
+
+
+DEFAULT_FIELD_TYPES = [
+    BooleanField,
+    CharField,
+    CommaSeparatedIntegerField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    EmailField,
+    FloatField,
+    NullBooleanField,
+    SlugField,
+    TimeField,
+    URLField,
+    BigIntegerField,
+    IntegerField,
+    PositiveIntegerField,
+    PositiveSmallIntegerField,
+    SmallIntegerField
+]
+FIELD_TYPES = {f.__name__: f for f in DEFAULT_FIELD_TYPES}
+FIELD_TYPE_CHOICES = [(k, k) for k in FIELD_TYPES.keys()]
+
+
+# TODO: function to add custom field types?
 
 
 ATTRIBUTE_VALIDATORS = {}

@@ -1,12 +1,12 @@
 from django.test import TestCase
 
 from .models import Organization, Project, Party, Parcel
-from .fixtures import create_object_fixtures
+from .fixtures import create_fixtures
 
 
 class FixtureTest(TestCase):
     def setUp(self):
-        create_object_fixtures()
+        create_fixtures()
 
     def test_fixtures(self):
         assert Organization.objects.count() == 3

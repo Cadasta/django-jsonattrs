@@ -1,4 +1,4 @@
-from collections import UserDict, OrderedDict
+from collections import UserDict
 # import json
 
 from psycopg2.extras import Json
@@ -7,7 +7,7 @@ from psycopg2.extras import Json
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields import JSONField
 
-from .models import Schema
+from .models import Schema, compose_schemas
 
 
 class JSONAttributes(UserDict):
@@ -31,19 +31,8 @@ class JSONAttributes(UserDict):
         # Extract schema attributes, names of required attributes and
         # names of attributes with defaults, composing schemas for
         # instance.
-        sattrs = [s.attributes.all() for s in self._schemas]
-        self._attrs = OrderedDict()
-        for sas in sattrs:
-            for sa in sas:
-                if sa.omit:
-                    if sa.name in self._attrs:
-                        del self._attrs[sa.name]
-                else:
-                    self._attrs[sa.name] = sa
-        self._required_attrs = {n for n, a in self._attrs.items()
-                                if a.required}
-        self._default_attrs = {n for n, a in self._attrs.items()
-                               if a.default is not None}
+        attrs = compose_schemas(*self._schemas)
+        self._attrs, self._required_attrs, self._default_attrs = attrs
 
         # Fill in defaulted attributes.
         if len(self._required_attrs) > 0:

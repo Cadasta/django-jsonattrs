@@ -194,9 +194,9 @@ def selectors_from_names(selector_names):
     div = None
     dept = None
     if len(selector_names) > 0:
-        div = Division.objects.get(name=selector_names[0])
+        div = Division.objects.get(name=selector_names[0]).pk
     if len(selector_names) > 1:
-        dept = Department.objects.get(name=selector_names[1])
+        dept = Department.objects.get(name=selector_names[1]).pk
     if div is not None and dept is not None:
         return (div, dept)
     elif div is not None:
@@ -260,10 +260,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['delete']:
-            Schema.objects.all().delete()
             Division.objects.all().delete()
-            Department.objects.all().delete()
-            Party.objects.all().delete()
-            Contract.objects.all().delete()
+            Schema.objects.all().delete()
         else:
             create_objects()

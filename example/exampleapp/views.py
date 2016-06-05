@@ -55,9 +55,12 @@ class SchemaList(generic.ListView):
         context = super().get_context_data(*args, **kwargs)
         table_data = []
         for schema in context['object_list']:
-            nsel = len(schema.selectors)
-            div_selector = schema.selectors[0] if nsel > 0 else None
-            dept_selector = schema.selectors[1] if nsel > 1 else None
+            sel = schema.selectors
+            nsel = len(sel)
+            div_selector = (Division.objects.get(pk=sel[0]).name
+                            if nsel > 0 else None)
+            dept_selector = (Department.objects.get(pk=sel[1]).name
+                             if nsel > 1 else None)
             table_data.append({'content_type': schema.content_type,
                                'division': div_selector,
                                'department': dept_selector,
@@ -75,9 +78,9 @@ class SchemaMixin:
         if obj is not None:
             sels = obj.selectors
             return {'content_type': obj.content_type,
-                    'division': (Division.objects.get(name=sels[0])
+                    'division': (Division.objects.get(pk=sels[0])
                                  if len(sels) > 0 else None),
-                    'department': (Department.objects.get(name=sels[1])
+                    'department': (Department.objects.get(pk=sels[1])
                                    if len(sels) > 1 else None)}
         else:
             return {}
@@ -108,14 +111,10 @@ class SchemaMixin:
         div = None
         dept = None
         if self.request.POST['division']:
-            div = Division.objects.get(
-                pk=self.request.POST['division']
-            )
+            div = self.request.POST['division']
             selectors = (div,)
             if self.request.POST['department']:
-                dept = Department.objects.get(
-                    pk=self.request.POST['department']
-                )
+                dept = self.request.POST['department']
                 selectors = (div, dept)
         try:
             with transaction.atomic():
@@ -142,7 +141,7 @@ class SchemaCreate(SchemaMixin, generic.FormView):
     def set_up_schema(self, content_type, selectors):
         self.schema = Schema.objects.create(
             content_type=content_type,
-            selectors=list(map(lambda s: s.name, selectors))
+            selectors=selectors
         )
 
 
@@ -156,7 +155,7 @@ class SchemaUpdate(SchemaMixin, generic.FormView):
     def set_up_schema(self, content_type, selectors):
         self.schema = Schema.objects.get(
             content_type=content_type,
-            selectors=list(map(lambda s: s.name, selectors))
+            selectors=selectors
         )
 
 

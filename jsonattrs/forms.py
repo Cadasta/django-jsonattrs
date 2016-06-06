@@ -25,6 +25,17 @@ class AttributeModelForm(forms.ModelForm):
         attrs, _, _ = compose_schemas(*schemas)
         for name, attr in attrs.items():
             name = self.attributes_field + '::' + name
-            self.fields[name] = forms.CharField(
-                max_length=32, label=attr.long_name
-            )
+            field = getattr(forms, attr.coarse_type, None)
+            if field is not None:
+                args = {'label': attr.long_name}
+                if attr.coarse_type == 'CharField':
+                    args['max_length'] = 32
+                    if len(attr.choices) > 0:
+                        args['choices'] = list(map(lambda c: (c, c),
+                                                   attr.choices.split(',')))
+                        field = forms.ChoiceField
+                if attr.required:
+                    args['required'] = True
+                if len(attr.default) > 0:
+                    args['initial'] = attr.default
+                self.fields[name] = field(**args)

@@ -38,9 +38,11 @@ class AttributeModelForm(forms.ModelForm):
                                                attr.choices.split(',')))
                 if attr.coarse_type == 'BooleanField':
                     args['required'] = False
+                    if len(attr.default) > 0:
+                        args['initial'] = attr.default != 'False'
                 elif attr.required:
                     args['required'] = True
-                if len(attr.default) > 0:
-                    args['initial'] = attr.default
+                    if len(attr.default) > 0:
+                        args['initial'] = attr.default
                 print(name, field, args)
                 self.fields[name] = field(**args)

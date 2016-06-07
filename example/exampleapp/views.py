@@ -2,13 +2,14 @@ import django.views.generic as generic
 import django.views.generic.edit as edit
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse_lazy
-from django.forms import ModelForm, ModelChoiceField
+from django.forms import ModelChoiceField
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
 import django.db.transaction as transaction
 from django.db.utils import OperationalError, ProgrammingError
 
 from jsonattrs.models import Schema
+from jsonattrs.forms import AttributeModelForm
 
 from .models import Division, Department, Party, Contract
 from .forms import SchemaForm, AttributeFormSet
@@ -175,6 +176,14 @@ class EntityAttributesMixin:
         context['attrs'] = context['object'].attrs.attributes.values()
         return context
 
+    def form_valid(self, form):
+        print('EntityAttributesMixin.form_valid:', self.request.POST)
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        print('EntityAttributesMixin.form_invalid:', self.request.POST)
+        return super().form_invalid(form)
+
 
 # ----------------------------------------------------------------------
 #
@@ -213,7 +222,7 @@ class DepartmentDetail(EntityAttributesMixin, generic.DetailView):
     model = Department
 
 
-class DepartmentForm(ModelForm):
+class DepartmentForm(AttributeModelForm):
     class Meta:
         model = Department
         fields = ('name', 'division')
@@ -249,7 +258,9 @@ class PartyDetail(EntityAttributesMixin, generic.DetailView):
     model = Party
 
 
-class PartyForm(ModelForm):
+class PartyForm(AttributeModelForm):
+    attributes_field = 'attrs'
+
     class Meta:
         model = Party
         fields = ('name', 'department')
@@ -266,7 +277,7 @@ class PartyCreate(edit.CreateView):
     form_class = PartyForm
 
 
-class PartyUpdate(edit.UpdateView):
+class PartyUpdate(EntityAttributesMixin, edit.UpdateView):
     model = Party
     form_class = PartyForm
     template_name_suffix = '_update_form'
@@ -290,7 +301,7 @@ class ContractDetail(EntityAttributesMixin, generic.DetailView):
     model = Contract
 
 
-class ContractForm(ModelForm):
+class ContractForm(AttributeModelForm):
     class Meta:
         model = Contract
         fields = ('department',)

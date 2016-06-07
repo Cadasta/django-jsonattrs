@@ -4,8 +4,9 @@ from django.forms.models import inlineformset_factory
 from django.contrib.contenttypes.models import ContentType
 
 from jsonattrs.models import Schema, Attribute
+from jsonattrs.forms import AttributeModelForm
 
-from .models import Division, Department
+from .models import Division, Department, Party, Contract
 
 
 class AttributeInlineFormSet(forms.BaseInlineFormSet):
@@ -45,3 +46,35 @@ class SchemaForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
+
+
+class DivisionForm(AttributeModelForm):
+    attributes_field = 'attrs'
+
+    class Meta:
+        model = Division
+        fields = ('name',)
+
+
+class DepartmentForm(AttributeModelForm):
+    attributes_field = 'attrs'
+
+    class Meta:
+        model = Department
+        fields = ('name', 'division')
+
+
+class PartyForm(AttributeModelForm):
+    attributes_field = 'attrs'
+
+    class Meta:
+        model = Party
+        fields = ('department', 'name')
+
+
+class ContractForm(AttributeModelForm):
+    attributes_field = 'attrs'
+
+    class Meta:
+        model = Contract
+        fields = ('department', 'responsible')

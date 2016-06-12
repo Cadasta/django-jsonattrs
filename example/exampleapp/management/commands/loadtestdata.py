@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 
 from jsonattrs.models import Schema, Attribute
-from exampleapp.models import Division, Department, Party, Contract
+from exampleapp.models import Division, Department, Party
 
 
 DATA = [
@@ -133,31 +133,31 @@ DEFAULT_SCHEMATA = [
      'selectors': (),
      'fields': [
          {'name': 'turnover', 'long_name': 'Total divisional turnover',
-          'coarse_type': 'IntField', 'subtype': 'currency'}
+          'coarse_type': 'integer', 'subtype': 'currency'}
      ]},
 
     {'content_type': 'department',
      'selectors': (),
      'fields': [
          {'name': 'chief', 'long_name': 'Department chief',
-          'coarse_type': 'CharField', 'subtype': 'foreign-key(Party)'}
+          'coarse_type': 'foreign-key', 'subtype': 'Party'}
      ]},
 
     {'content_type': 'party',
      'selectors': (),
      'fields': [
          {'name': 'office', 'long_name': 'City of base office',
-          'coarse_type': 'CharField', 'subtype': 'city',
+          'coarse_type': 'char', 'subtype': 'city',
           'required': True, 'default': 'New York'},
          {'name': 'salary', 'long_name': 'Employee salary',
-          'coarse_type': 'IntField', 'subtype': 'currency'}
+          'coarse_type': 'integer', 'subtype': 'currency'}
      ]},
 
     {'content_type': 'contract',
      'selectors': (),
      'fields': [
          {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
-          'coarse_type': 'CharField', 'subtype': 'country',
+          'coarse_type': 'char', 'subtype': 'country',
           'required': True, 'default': 'US'}
      ]}
 ]
@@ -168,10 +168,9 @@ SPECIFIC_SCHEMATA = [
      'selectors': ('Civil',),
      'fields': [
          {'name': 'digger', 'long_name': 'Can dig!',
-          'coarse_type': 'BooleanField',
-          'required': True, 'default': False},
+          'coarse_type': 'boolean', 'required': True, 'default': False},
          {'name': 'certification', 'long_name': 'CEng certification level',
-          'coarse_type': 'ChoiceField',
+          'coarse_type': 'choices',
           'choices': 'None,Apprentice,Journeyman,Master',
           'required': True, 'default': 'None'}
      ]},
@@ -179,13 +178,13 @@ SPECIFIC_SCHEMATA = [
      'selectors': ('Civil', 'Bridges'),
      'fields': [
          {'name': 'vertigo', 'long_name': 'Gets vertigo',
-          'coarse_type': 'BooleanField', 'required': True, 'default': False}
+          'coarse_type': 'boolean', 'required': True, 'default': False}
      ]},
     {'content_type': 'party',
      'selectors': ('Marine',),
      'fields': [
          {'name': 'aquatic', 'long_name': 'Can breathe underwater!',
-          'coarse_type': 'BooleanField', 'required': True, 'default': False}
+          'coarse_type': 'boolean', 'required': True, 'default': False}
      ]}
 ]
 

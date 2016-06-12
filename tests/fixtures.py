@@ -2,7 +2,8 @@ import itertools
 
 from django.contrib.contenttypes.models import ContentType
 
-from jsonattrs.models import Schema, Attribute
+from jsonattrs.models import Schema, Attribute, AttributeType
+from jsonattrs.management.commands import loadattrtypes
 
 from .models import Organization, Project
 from .factories import (
@@ -17,7 +18,7 @@ DEFAULT_SCHEMATA = [
      'fields': [
          {'name': 'home_office',
           'long_name': 'Country of organization home office',
-          'coarse_type': 'CharField', 'subtype': 'country',
+          'attr_type': 'text',  # 'subtype': 'country',
           'default': 'New York', 'required': True}
      ]},
 
@@ -25,18 +26,15 @@ DEFAULT_SCHEMATA = [
      'content_type': 'project',
      'selectors': (),
      'fields': [
-         {'name': 'head', 'long_name': 'Project head',
-          'coarse_type': 'CharField'}
+         {'name': 'head', 'long_name': 'Project head', 'attr_type': 'text'}
      ]},
 
     {'name': 'party-default',
      'content_type': 'party',
      'selectors': (),
      'fields': [
-         {'name': 'dob', 'long_name': 'Date of birth',
-          'coarse_type': 'DateField'},
-         {'name': 'gender', 'long_name': 'Gender',
-          'coarse_type': 'CharField'}
+         {'name': 'dob', 'long_name': 'Date of birth', 'attr_type': 'date'},
+         {'name': 'gender', 'long_name': 'Gender', 'attr_type': 'text'}
      ]},
 
     {'name': 'parcel-default',
@@ -44,8 +42,8 @@ DEFAULT_SCHEMATA = [
      'selectors': (),
      'fields': [
          {'name': 'quality', 'long_name': 'Quality of parcel geomeatry',
-          'coarse_type': 'CharField', 'default': 'none', 'required': True,
-          'choices': 'none,text,point,polygon_low,polygon_high'}
+          'attr_type': 'select_one', 'default': 'none', 'required': True,
+          'choices': ['none', 'text', 'point', 'polygon_low', 'polygon_high']}
      ]}
 ]
 
@@ -55,24 +53,22 @@ SPECIFIC_SCHEMATA = [
      'selectors': ('Organization #1',),
      'fields': [
          {'name': 'education', 'long_name': 'Education level',
-          'coarse_type': 'CharField'}
+          'attr_type': 'text'}
      ]},
     {'name': 'party-proj11',
      'content_type': 'party',
      'selectors': ('Organization #1', 'Project #1.1'),
      'fields': [
          {'name': 'homeowner', 'long_name': 'Is homeowner',
-          'coarse_type': 'BooleanField', 'required': True,
-          'default': False}
+          'attr_type': 'boolean', 'required': True, 'default': False}
      ]},
     {'name': 'party-proj12',
      'content_type': 'party',
      'selectors': ('Organization #1', 'Project #1.2'),
      'fields': [
          {'name': 'homeowner', 'long_name': 'Is homeowner',
-          'coarse_type': 'BooleanField', 'required': True,
-          'default': False},
-         {'name': 'dob', 'omit': True}
+          'attr_type': 'boolean', 'required': True, 'default': False},
+         {'name': 'dob', 'attr_type': 'date', 'omit': True}
      ]}
 ]
 
@@ -82,6 +78,8 @@ def create_fixtures(do_schemas=True):
     schres = {}
 
     if do_schemas:
+        loadattrtypes.run(delete=True)
+        loadattrtypes.run()
         schres.update(create_schema_fixtures(DEFAULT_SCHEMATA))
 
     for iorg in range(1, 4):
@@ -151,18 +149,16 @@ def create_schema_fixtures(schemata):
         )
         res[schema['name']] = schema_obj
         for field, index in zip(schema['fields'], itertools.count(1)):
-            long_name = field.get('long_name', '')
-            coarse_type = field.get('coarse_type', '')
-            subtype = field.get('subtype', '')
-            choices = field.get('choices', '')
+            long_name = field.get('long_name', field['name'])
+            attr_type = AttributeType.objects.get(name=field['attr_type'])
+            choices = field.get('choices', [])
             default = field.get('default', '')
             required = field.get('required', False)
             omit = field.get('omit', False)
             Attribute.objects.create(
                 schema=schema_obj,
                 name=field['name'], long_name=long_name,
-                coarse_type=coarse_type, subtype=subtype,
-                index=index,
+                attr_type=attr_type, index=index,
                 choices=choices, default=default,
                 required=required, omit=omit
             )

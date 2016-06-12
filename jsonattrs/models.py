@@ -7,25 +7,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
-from django.db.models import (
-    BooleanField,
-    CharField,
-    CommaSeparatedIntegerField,
-    DateField,
-    DateTimeField,
-    DecimalField,
-    EmailField,
-    FloatField,
-    NullBooleanField,
-    SlugField,
-    TimeField,
-    URLField,
-    BigIntegerField,
-    IntegerField,
-    PositiveIntegerField,
-    PositiveSmallIntegerField,
-    SmallIntegerField
-)
 
 
 class SchemaManager(models.Manager):
@@ -120,76 +101,60 @@ def compose_schemas(*schemas):
     return attrs, required_attrs, default_attrs
 
 
-DEFAULT_FIELD_TYPES = [
-    BooleanField,
-    CharField,
-    CommaSeparatedIntegerField,
-    DateField,
-    DateTimeField,
-    DecimalField,
-    EmailField,
-    FloatField,
-    NullBooleanField,
-    SlugField,
-    TimeField,
-    URLField,
-    BigIntegerField,
-    IntegerField,
-    PositiveIntegerField,
-    PositiveSmallIntegerField,
-    SmallIntegerField
-]
-FIELD_TYPES = {f.__name__: f for f in DEFAULT_FIELD_TYPES}
-FIELD_TYPE_CHOICES = [(k, k) for k in FIELD_TYPES.keys()]
+def create_attribute_type(name, label, form_field,
+                          widget=None, validator_re=None, validator_type=None):
+    AttributeType.objects.create(
+        name=name, label=label, form_field=form_field, widget=widget,
+        validator_re=validator_re, validator_type=validator_type
+    )
 
 
-# TODO: function to add custom field types?
+class AttributeType(models.Model):
+    name = models.CharField(max_length=256)
+    label = models.CharField(max_length=512)
+    form_field = models.CharField(max_length=256)
+    widget = models.CharField(max_length=256, null=True, blank=True)
+    validator_re = models.CharField(max_length=512, null=True, blank=True)
+    validator_type = models.CharField(max_length=256, null=True, blank=True)
 
 
-ATTRIBUTE_VALIDATORS = {}
+# Sigh.  Oh Python.  Really?  Why?  Is there really no other way to
+# look up a class by name than to manually calculate the transitive
+# closure of the subclass relationship starting from "object"?
+
+def desc_classes(c):
+    try:
+        scs = c.__subclasses__()
+        sscs = []
+        for sc in scs:
+            sscs += desc_classes(sc)
+        scs += sscs
+        return scs
+    except:
+        return []
 
 
-def validator(type, check_valid):
-    if not isinstance(type, tuple):
-        type = (type, '')
-    ATTRIBUTE_VALIDATORS[type] = check_valid
+class_cache = None
 
 
-def re_validate(re):
-    return lambda v: re.match(v) is not None
+def find_class(name):
+    global class_cache
 
-
-int_re = re.compile(r'[-+]?\d+')
-pint_re = re.compile(r'\d+')
-csint_re = re.compile(r'([-+]?\d+)(,[-+]?\d+)*')
-decimal_re = re.compile(r'[-+]?\d+(\.\d+)?')
-bool_re = re.compile(r'true|false|True|False')
-
-validator('BigIntegerField', re_validate(int_re))
-validator('IntegerField', re_validate(int_re))
-validator('SmallIntegerField', re_validate(int_re))
-validator('PositiveIntegerField', re_validate(pint_re))
-validator('PositiveSmallIntegerField', re_validate(pint_re))
-validator('BooleanField', lambda v: (isinstance(v, bool) or
-                                     re_validate(bool_re)(v)))
-validator('CharField', lambda v: isinstance(v, str))
-validator('CommaSeparatedIntegerField', re_validate(csint_re))
-
-
-# TODO: fill in more validators here.
+    if class_cache is None:
+        class_cache = desc_classes(object)
+    return [c for c in class_cache if c.__name__ == name][0]
 
 
 class Attribute(models.Model):
     schema = models.ForeignKey(
         Schema, related_name='attributes', on_delete=models.CASCADE
     )
-    name = models.CharField(max_length=50)
-    long_name = models.CharField(max_length=50, blank=True)
-    coarse_type = models.CharField(max_length=255, choices=FIELD_TYPE_CHOICES)
-    subtype = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=256)
+    long_name = models.CharField(max_length=512, blank=True)
+    attr_type = models.ForeignKey(AttributeType, on_delete=models.CASCADE)
     index = models.IntegerField()
-    choices = models.CharField(max_length=200, blank=True)
-    default = models.CharField(max_length=50, blank=True)
+    choices = ArrayField(models.CharField(max_length=256), null=True)
+    default = models.CharField(max_length=256, blank=True)
     required = models.BooleanField(default=False)
     omit = models.BooleanField(default=False)
 
@@ -198,15 +163,22 @@ class Attribute(models.Model):
         unique_together = (('schema', 'index'), ('schema', 'name'))
 
     def validate(self, value):
-        if self.choices is not None and self.choices != '':
-            if value not in self.choices.split(','):
+        if self.choices is not None and self.choices != []:
+            if value not in self.choices:
                 raise ValidationError(
                     _('Invalid choice for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}
                 )
-        if (self.coarse_type, self.subtype) in ATTRIBUTE_VALIDATORS:
-            check = ATTRIBUTE_VALIDATORS[(self.coarse_type, self.subtype)]
-            if not check(value):
+        atype = self.attr_type
+        if isinstance(value, str):
+            if (atype.validator_re is not None and
+               re.match(atype.validator_re, value) is None):
+                raise ValidationError(
+                    _('Validation failed for %(field)s: "%(value)s"'),
+                    params={'field': self.name, 'value': value}
+                )
+        elif atype.validator_type is not None:
+            if not isinstance(value, find_class(atype.validator_type)):
                 raise ValidationError(
                     _('Validation failed for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}

@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import ModelChoiceField
 from django.forms.widgets import HiddenInput
 from django.forms.models import inlineformset_factory
 from django.contrib.contenttypes.models import ContentType
@@ -69,7 +70,7 @@ class PartyForm(AttributeModelForm):
 
     class Meta:
         model = Party
-        fields = ('department', 'name')
+        fields = ('name',)
 
 
 class ContractForm(AttributeModelForm):
@@ -77,4 +78,4 @@ class ContractForm(AttributeModelForm):
 
     class Meta:
         model = Contract
-        fields = ('department', 'responsible')
+        fields = ('responsible',)

@@ -4,3 +4,4 @@ omit =
     example/*
     jsonattrs/migrations/*
     jsonattrs/__init__.py
+    jsonattrs/management/commands/*

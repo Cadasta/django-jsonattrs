@@ -12,7 +12,7 @@ from jsonattrs.models import Schema
 from jsonattrs.forms import AttributeModelForm
 
 from .models import Division, Department, Party, Contract
-from .forms import SchemaForm, AttributeFormSet
+from .forms import SchemaForm, AttributeFormSet, PartyForm
 
 
 try:
@@ -187,6 +187,23 @@ class EntityAttributesMixin:
 
 # ----------------------------------------------------------------------
 #
+#  DIVISION/DEPARTMENT MENU
+#
+
+class DivisionDepartmentMixin:
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        divdepts = []
+        for div in Division.objects.all():
+            for dept in div.departments.all():
+                divdepts.append((div.name + '/' + dept.name,
+                                 (div.pk, dept.pk)))
+        context['divdepts'] = divdepts
+        return context
+
+
+# ----------------------------------------------------------------------
+#
 #  DIVISIONS
 #
 
@@ -256,20 +273,6 @@ class PartyList(generic.ListView):
 
 class PartyDetail(EntityAttributesMixin, generic.DetailView):
     model = Party
-
-
-class PartyForm(AttributeModelForm):
-    attributes_field = 'attrs'
-
-    class Meta:
-        model = Party
-        fields = ('name', 'department')
-
-    def __init__(self, *args, **kwargs):
-        super(PartyForm, self).__init__(*args, **kwargs)
-        self.fields['department'] = ModelChoiceField(
-            queryset=Department.objects.all(), empty_label=None
-        )
 
 
 class PartyCreate(edit.CreateView):

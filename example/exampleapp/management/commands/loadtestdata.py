@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 
-from jsonattrs.models import Schema, Attribute
+from jsonattrs.models import Schema, Attribute, AttributeType
 from exampleapp.models import Division, Department, Party
 
 
@@ -133,31 +133,32 @@ DEFAULT_SCHEMATA = [
      'selectors': (),
      'fields': [
          {'name': 'turnover', 'long_name': 'Total divisional turnover',
-          'coarse_type': 'integer', 'subtype': 'currency'}
+          'attr_type': 'integer'}  # , 'subtype': 'currency'}
      ]},
 
     {'content_type': 'department',
      'selectors': (),
      'fields': [
          {'name': 'chief', 'long_name': 'Department chief',
-          'coarse_type': 'foreign-key', 'subtype': 'Party'}
+          'attr_type': 'text'}
+         # 'attr_type': 'foreign-key', 'subtype': 'Party'}
      ]},
 
     {'content_type': 'party',
      'selectors': (),
      'fields': [
          {'name': 'office', 'long_name': 'City of base office',
-          'coarse_type': 'char', 'subtype': 'city',
+          'attr_type': 'text',  # , 'subtype': 'city',
           'required': True, 'default': 'New York'},
          {'name': 'salary', 'long_name': 'Employee salary',
-          'coarse_type': 'integer', 'subtype': 'currency'}
+          'attr_type': 'integer'}  # , 'subtype': 'currency'}
      ]},
 
     {'content_type': 'contract',
      'selectors': (),
      'fields': [
          {'name': 'jurisdiction', 'long_name': 'Legal jurisdiction',
-          'coarse_type': 'char', 'subtype': 'country',
+          'attr_type': 'text',  # , 'subtype': 'country',
           'required': True, 'default': 'US'}
      ]}
 ]
@@ -168,23 +169,23 @@ SPECIFIC_SCHEMATA = [
      'selectors': ('Civil',),
      'fields': [
          {'name': 'digger', 'long_name': 'Can dig!',
-          'coarse_type': 'boolean', 'required': True, 'default': False},
+          'attr_type': 'boolean', 'required': True, 'default': False},
          {'name': 'certification', 'long_name': 'CEng certification level',
-          'coarse_type': 'choices',
-          'choices': 'None,Apprentice,Journeyman,Master',
+          'attr_type': 'select_one',
+          'choices': ['None', 'Apprentice', 'Journeyman', 'Master'],
           'required': True, 'default': 'None'}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil', 'Bridges'),
      'fields': [
          {'name': 'vertigo', 'long_name': 'Gets vertigo',
-          'coarse_type': 'boolean', 'required': True, 'default': False}
+          'attr_type': 'boolean', 'required': True, 'default': False}
      ]},
     {'content_type': 'party',
      'selectors': ('Marine',),
      'fields': [
          {'name': 'aquatic', 'long_name': 'Can breathe underwater!',
-          'coarse_type': 'boolean', 'required': True, 'default': False}
+          'attr_type': 'boolean', 'required': True, 'default': False}
      ]}
 ]
 
@@ -229,15 +230,14 @@ def create_schema(schema):
         selectors=selectors_from_names(schema['selectors'])
     )
     for field, index in zip(schema['fields'], itertools.count(1)):
-        subtype = field.get('subtype', '')
-        choices = field.get('choices', '')
+        choices = field.get('choices', [])
         default = field.get('default', '')
         required = field.get('required', False)
         omit = field.get('omit', False)
         Attribute.objects.create(
             schema=schema_obj,
             name=field['name'], long_name=field['long_name'],
-            coarse_type=field['coarse_type'], subtype=subtype,
+            attr_type=AttributeType.objects.get(name=field['attr_type']),
             index=index, choices=choices, default=default,
             required=required, omit=omit
         )

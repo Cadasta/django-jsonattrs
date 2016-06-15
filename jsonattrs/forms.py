@@ -39,13 +39,13 @@ class AttributeModelForm(forms.ModelForm):
         attrs = None
         attrvals = {}
         schemas = None
-        if hasattr(self, 'instance') and self.instance is not None:
+        if self.instance.pk is not None:
             schemas = Schema.objects.from_instance(self.instance)
             attrvals = getattr(self.instance, self.attributes_field)
         elif schema_selectors is not None:
-            content_type = ContentType.objects.get_for_model(self.model)
+            content_type = ContentType.objects.get_for_model(self.Meta.model)
             schemas = Schema.objects.lookup(
-                content_type, schema_selectors
+                content_type=content_type, selectors=schema_selectors
             )
         attrs, _, _ = compose_schemas(*schemas)
         for name, attr in attrs.items():
@@ -55,9 +55,9 @@ class AttributeModelForm(forms.ModelForm):
             field = form_field_from_name(atype.form_field)
             if atype.name == 'text':
                 args['max_length'] = 32
-            if attr.name == 'select_one' or attr.name == 'select_multiple':
+            if atype.name == 'select_one' or atype.name == 'select_multiple':
                 args['choices'] = list(map(lambda c: (c, c), attr.choices))
-            if attr.name == 'boolean':
+            if atype.name == 'boolean':
                 args['required'] = False
                 if len(attr.default) > 0:
                     args['initial'] = attr.default != 'False'
@@ -79,6 +79,9 @@ class AttributeModelForm(forms.ModelForm):
         chk = self.attributes_field + '::'
         chklen = len(chk)
         attrvals = getattr(self.instance, self.attributes_field)
+        print(self)
+        print(self.__class__)
+        print(dir(self))
         for k, v in self.cleaned_data.items():
             if k.startswith(chk):
                 k = k[chklen:]
@@ -88,6 +91,13 @@ class AttributeModelForm(forms.ModelForm):
 
     def save(self, *args, **kwargs):
         print('AttributeModelForm.save')
+        print(self)
+        print(self.__class__)
+        print(dir(self))
+        print('is_bound:', self.is_bound)
+        print('is_valid:', self.is_valid())
+        print('errors:', self.errors)
+        print('non_field_errors:', self.non_field_errors())
         if self.attributes_field is not None:
             self.process_attributes_fields()
         return super().save(*args, **kwargs)

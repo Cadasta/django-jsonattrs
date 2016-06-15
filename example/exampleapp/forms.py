@@ -1,5 +1,4 @@
 from django import forms
-from django.forms import ModelChoiceField
 from django.forms.widgets import HiddenInput
 from django.forms.models import inlineformset_factory
 from django.contrib.contenttypes.models import ContentType
@@ -79,3 +78,12 @@ class ContractForm(AttributeModelForm):
     class Meta:
         model = Contract
         fields = ('responsible',)
+
+
+class DivisionDepartmentForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        choices = kwargs.pop('choices')
+        super().__init__(*args, **kwargs)
+        self.fields['divdept'] = forms.ChoiceField(
+            label='Division/Department', choices=choices
+        )

@@ -28,5 +28,8 @@
 </table>
 
 <br>
-<a href="{% url 'contract-add' %}">Create new contract</a>
+<form action="{% url 'contract-add' %}" method="get">
+  {{ divdept_form.as_p }}
+  <input type="submit" value="Create new contract" />
+</form>
 {% endblock %}

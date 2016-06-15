@@ -12,7 +12,9 @@ from jsonattrs.models import Schema
 from jsonattrs.forms import AttributeModelForm
 
 from .models import Division, Department, Party, Contract
-from .forms import SchemaForm, AttributeFormSet, PartyForm
+from .forms import (
+    SchemaForm, AttributeFormSet, PartyForm, DivisionDepartmentForm
+)
 
 
 try:
@@ -187,7 +189,7 @@ class EntityAttributesMixin:
 
 # ----------------------------------------------------------------------
 #
-#  DIVISION/DEPARTMENT MENU
+#  DIVISION/DEPARTMENT HANDLING FOR OBJECT CREATION FORMS
 #
 
 class DivisionDepartmentMixin:
@@ -196,9 +198,27 @@ class DivisionDepartmentMixin:
         divdepts = []
         for div in Division.objects.all():
             for dept in div.departments.all():
-                divdepts.append((div.name + '/' + dept.name,
-                                 (div.pk, dept.pk)))
-        context['divdepts'] = divdepts
+                divdepts.append((str(div.pk) + ':' + str(dept.pk),
+                                 div.name + '/' + dept.name))
+        context['divdept_form'] = DivisionDepartmentForm(choices=divdepts)
+        return context
+
+
+class DivisionDepartmentCreateMixin:
+    def get_form_kwargs(self):
+        print('get_form_kwargs')
+        kwargs = super().get_form_kwargs()
+        kwargs['schema_selectors'] = tuple(
+            self.request.GET['divdept'].split(':')
+        )
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        print('get_context_data')
+        context = super().get_context_data(*args, **kwargs)
+        divpk, deptpk = self.request.GET['divdept'].split(':')
+        context['divname'] = Division.objects.get(pk=divpk).name
+        context['deptname'] = Department.objects.get(pk=deptpk).name
         return context
 
 
@@ -267,7 +287,7 @@ class DepartmentDelete(edit.DeleteView):
 #  PARTIES
 #
 
-class PartyList(generic.ListView):
+class PartyList(DivisionDepartmentMixin, generic.ListView):
     model = Party
 
 
@@ -275,7 +295,7 @@ class PartyDetail(EntityAttributesMixin, generic.DetailView):
     model = Party
 
 
-class PartyCreate(edit.CreateView):
+class PartyCreate(DivisionDepartmentCreateMixin, edit.CreateView):
     model = Party
     form_class = PartyForm
 
@@ -296,7 +316,7 @@ class PartyDelete(edit.DeleteView):
 #  CONTRACTS
 #
 
-class ContractList(generic.ListView):
+class ContractList(DivisionDepartmentMixin, generic.ListView):
     model = Contract
 
 
@@ -316,7 +336,7 @@ class ContractForm(AttributeModelForm):
         )
 
 
-class ContractCreate(edit.CreateView):
+class ContractCreate(DivisionDepartmentCreateMixin, edit.CreateView):
     model = Contract
     form_class = ContractForm
 

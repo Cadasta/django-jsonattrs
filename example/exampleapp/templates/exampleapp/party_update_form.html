@@ -1,6 +1,8 @@
 {% extends "exampleapp/base.html" %}
 
-{% block title %}Update party{% endblock %}
+{% block title %}
+Update party ({{ object.department.division.name }}/{{ object.department.name }})
+{% endblock %}
 
 {% block back %}
 <a href="{% url 'party-list' %}">Back to party list</a>
@@ -8,17 +10,6 @@
 {% endblock %}
 
 {% block content %}
-<table>
-  <tr>
-    <td>Division:</td>
-    <td>{{ object.department.division.name }}</td>
-  </tr>
-  <tr>
-    <td>Department:</td>
-    <td>{{ object.department.name }}</td>
-  </tr>
-</table>
-
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
   <input type="submit" value="Update" />

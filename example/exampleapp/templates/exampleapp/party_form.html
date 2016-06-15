@@ -1,6 +1,8 @@
 {% extends "exampleapp/base.html" %}
 
-{% block title %}Create party{% endblock %}
+{% block title %}
+Create party ({{ divname }}/{{ deptname }})
+{% endblock %}
 
 {% block back %}
 <a href="{% url 'party-list' %}">Back to party list</a>

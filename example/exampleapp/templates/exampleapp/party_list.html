@@ -26,5 +26,8 @@
 </table>
 
 <br>
-<a href="{% url 'party-add' %}">Create new party</a>
+<form action="{% url 'party-add' %}" method="get">
+  {{ divdept_form.as_p }}
+  <input type="submit" value="Create new party" />
+</form>
 {% endblock %}

@@ -30,23 +30,29 @@ def form_field_from_name(name):
 class AttributeModelForm(forms.ModelForm):
     attributes_field = None
 
-    def __init__(self, schema_selectors=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        schema_selectors = kwargs.pop('schema_selectors', None)
         super().__init__(*args, **kwargs)
         if self.attributes_field is not None:
             self.add_attribute_fields(schema_selectors)
 
     def add_attribute_fields(self, schema_selectors):
         attrs = None
-        attrvals = {}
+        attrvals = getattr(self.instance, self.attributes_field)
         schemas = None
         if self.instance.pk is not None:
             schemas = Schema.objects.from_instance(self.instance)
-            attrvals = getattr(self.instance, self.attributes_field)
         elif schema_selectors is not None:
+            selectors = []
+            for ss in schema_selectors:
+                selectors.append(ss['selector'])
+                if ss['name'] is not None:
+                    setattr(self.instance, ss['name'], ss['value'])
             content_type = ContentType.objects.get_for_model(self.Meta.model)
             schemas = Schema.objects.lookup(
-                content_type=content_type, selectors=schema_selectors
+                content_type=content_type, selectors=selectors
             )
+            attrvals.setup_schema(schemas)
         attrs, _, _ = compose_schemas(*schemas)
         for name, attr in attrs.items():
             fieldname = self.attributes_field + '::' + name
@@ -79,25 +85,13 @@ class AttributeModelForm(forms.ModelForm):
         chk = self.attributes_field + '::'
         chklen = len(chk)
         attrvals = getattr(self.instance, self.attributes_field)
-        print(self)
-        print(self.__class__)
-        print(dir(self))
         for k, v in self.cleaned_data.items():
             if k.startswith(chk):
                 k = k[chklen:]
                 attrvals[k] = v
-                print('Adding:', k, '=', v)
         setattr(self.instance, self.attributes_field, attrvals)
 
     def save(self, *args, **kwargs):
-        print('AttributeModelForm.save')
-        print(self)
-        print(self.__class__)
-        print(dir(self))
-        print('is_bound:', self.is_bound)
-        print('is_valid:', self.is_valid())
-        print('errors:', self.errors)
-        print('non_field_errors:', self.non_field_errors())
         if self.attributes_field is not None:
             self.process_attributes_fields()
         return super().save(*args, **kwargs)

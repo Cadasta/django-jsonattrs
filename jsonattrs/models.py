@@ -38,6 +38,8 @@ class SchemaManager(models.Manager):
                     selector = getattr(selector, step, None)
                 selectors.append(str(selector))
         selectors = tuple(selectors)
+        if any(s is None for s in selectors):
+            return None
 
         # Look for schema list in cache, keyed by content type and
         # selector list.

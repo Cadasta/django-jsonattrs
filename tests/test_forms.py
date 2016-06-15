@@ -79,7 +79,11 @@ class FormCreationTest(FormTestBase):
 
     def test_simple_create_unbound_form(self):
         form = ProjectForm(
-            schema_selectors=(self.fixtures['org1'].pk,)
+            schema_selectors=(
+                {'name': 'organisation',
+                 'value': self.fixtures['org1'],
+                 'selector': self.fixtures['org1'].pk},
+            )
         )
         assert form.attributes_field == 'attrs'
         assert 'name' in form.fields
@@ -88,8 +92,13 @@ class FormCreationTest(FormTestBase):
 
     def test_create_unbound_form_field_types_1(self):
         form = PartyForm(
-            schema_selectors=(self.fixtures['org1'].pk,
-                              self.fixtures['proj11'].pk)
+            schema_selectors=(
+                {'name': None,
+                 'selector': self.fixtures['org1'].pk},
+                {'name': 'project',
+                 'value': self.fixtures['proj11'],
+                 'selector': self.fixtures['proj11'].pk}
+            )
         )
         assert form.attributes_field == 'attrs'
         assert 'name' in form.fields
@@ -106,8 +115,13 @@ class FormCreationTest(FormTestBase):
 
     def test_create_unbound_form_field_types_2(self):
         form = ParcelForm(
-            schema_selectors=(self.fixtures['org1'].pk,
-                              self.fixtures['proj11'].pk)
+            schema_selectors=(
+                {'name': None,
+                 'selector': self.fixtures['org1'].pk},
+                {'name': 'project',
+                 'value': self.fixtures['proj11'],
+                 'selector': self.fixtures['proj11'].pk}
+            )
         )
         assert form.attributes_field == 'attrs'
         assert 'address' in form.fields

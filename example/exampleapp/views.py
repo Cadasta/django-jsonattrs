@@ -206,15 +206,18 @@ class DivisionDepartmentMixin:
 
 class DivisionDepartmentCreateMixin:
     def get_form_kwargs(self):
-        print('get_form_kwargs')
         kwargs = super().get_form_kwargs()
-        kwargs['schema_selectors'] = tuple(
-            self.request.GET['divdept'].split(':')
+        divpk, deptpk = self.request.GET['divdept'].split(':')
+        kwargs['schema_selectors'] = (
+            {'name': None,
+             'selector': divpk},
+            {'name': 'department',
+             'value': Department.objects.get(pk=deptpk),
+             'selector': deptpk}
         )
         return kwargs
 
     def get_context_data(self, *args, **kwargs):
-        print('get_context_data')
         context = super().get_context_data(*args, **kwargs)
         divpk, deptpk = self.request.GET['divdept'].split(':')
         context['divname'] = Division.objects.get(pk=divpk).name

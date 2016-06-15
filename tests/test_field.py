@@ -109,6 +109,7 @@ class FieldAttributeTest(FieldTestBase):
 
     def test_attributes_lookup_dict(self):
         assert Party.objects.count() == 45
+        print([(p.name, p.attrs) for p in Party.objects.all()])
         assert Party.objects.filter(attrs={'homeowner': 'False'}).count() == 10
 
 

@@ -14,19 +14,31 @@ class JSONAttributes(UserDict):
     def __init__(self, *args, **kwargs):
         self._schemas = None
         self._instance = None
+        self._setup = False
         super().__init__(*args, **kwargs)
 
     def setup_from_dict(self, dict):
         self.setup_schema()
-        if dict is not None:
+        if dict is None or len(dict) == 0:
+            self._setup = False
+        else:
             for k, v in dict.items():
                 self._check_key(k)
                 self._attrs[k].validate(v)
                 self[k] = v
 
-    def setup_schema(self):
+    def setup_schema(self, schemas=None):
+        if self._setup and schemas is None:
+            return
+
         # Determine schemas for model instance containing this field.
-        self._schemas = Schema.objects.from_instance(self._instance)
+        if schemas is not None:
+            self._schemas = schemas
+        else:
+            self._schemas = Schema.objects.from_instance(self._instance)
+        if self._schemas is None:
+            return
+        self._setup = True
 
         # Extract schema attributes, names of required attributes and
         # names of attributes with defaults, composing schemas for
@@ -40,6 +52,7 @@ class JSONAttributes(UserDict):
                 self[key] = self._attrs[key].default
 
     def _check_key(self, key):
+        self.setup_schema()
         if key not in self._attrs:
             raise KeyError(key)
 
@@ -60,10 +73,12 @@ class JSONAttributes(UserDict):
 
     @property
     def schemas(self):
+        self.setup_schema()
         return self._schemas
 
     @property
     def attributes(self):
+        self.setup_schema()
         return self._attrs
 
 

@@ -109,3 +109,21 @@ class SchemataTest(TestCase):
         check(party, (o2, p21), s4)
         check(party, (o2,), s5)
         check(party, (), s6)
+
+    def test_bad_schema_lookup(self):
+        s1, s2, s3, s4, s5, s6 = self._create_test_schemata()
+        party = self.fixtures['party_t']
+        parcel = self.fixtures['parcel_t']
+        o1 = self.fixtures['org1'].name
+        p11 = self.fixtures['proj11'].name
+        p21 = self.fixtures['proj21'].name
+
+        def check(ct, sels):
+            assert Schema.objects.lookup(content_type=ct,
+                                         selectors=sels) is None
+
+        check(party, (o1, None))
+        check(parcel, (None, p11))
+        check(party, (o1, None))
+        check(party, (None, p21))
+        check(party, (None,))

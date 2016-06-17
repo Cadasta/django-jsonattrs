@@ -59,14 +59,15 @@ class AttributeModelForm(forms.ModelForm):
             atype = attr.attr_type
             args = {'label': attr.long_name}
             field = form_field_from_name(atype.form_field)
-            if atype.name == 'text':
+            if atype.form_field == 'CharField':
                 args['max_length'] = 32
-            if atype.name == 'select_one' or atype.name == 'select_multiple':
+            if (atype.form_field == 'ChoiceField' or
+               atype.form_field == 'MultipleChoiceField'):
                 args['choices'] = list(map(lambda c: (c, c), attr.choices))
-            if atype.name == 'boolean':
+            if atype.form_field == 'BooleanField':
                 args['required'] = False
                 if len(attr.default) > 0:
-                    args['initial'] = attr.default != 'False'
+                    args['initial'] = (attr.default != 'False')
             elif attr.required:
                 args['required'] = True
                 if len(attr.default) > 0:
@@ -76,8 +77,11 @@ class AttributeModelForm(forms.ModelForm):
 
     def set_initial(self, args, name, attr, attrvals):
         if name in attrvals:
-            if attr.attr_type.name == 'boolean':
-                args['initial'] = attrvals[name] != 'False'
+            if attr.attr_type.form_field == 'BooleanField':
+                if isinstance(attrvals[name], bool):
+                    args['initial'] = attrvals[name]
+                else:
+                    args['initial'] = attrvals[name] != 'False'
             else:
                 args['initial'] = attrvals[name]
 

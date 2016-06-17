@@ -102,6 +102,11 @@ class FieldAttributeTest(FieldTestBase):
                 project=self.fixtures['proj11'],
                 name='Bilbo Baggins', attrs={'homeowner': 'foo'}
             )
+        with pytest.raises(ValidationError):
+            Party.objects.create(
+                project=self.fixtures['proj11'],
+                name='Bilbo Baggins', attrs={'homeowner': 3}
+            )
 
     def test_attributes_lookup_keys(self):
         assert Party.objects.count() == 45

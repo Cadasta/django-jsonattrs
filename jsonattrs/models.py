@@ -214,3 +214,13 @@ class Attribute(models.Model):
                     _('Validation failed for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}
                 )
+
+    def __str__(self):
+        return '<{} attribute {}: required={} default={}>'.format(
+            self.attr_type.form_field,
+            self.name,
+            self.required, self.default
+        )
+
+    def __repr__(self):
+        return str(self)

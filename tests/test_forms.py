@@ -144,19 +144,55 @@ class FormCreationTest(FormTestBase):
             PartyForm(instance=party)
 
 
-# class FormSaveTest(FormTestBase):
-#     def setUp(self):
-#         super().setUp()
-#         self.party = self.fixtures['party111']
-#         self.data = {
-#             'name': self.party.name,
-#             'project': self.party.project.name
-#         }
+class FormSaveTest(FormTestBase):
+    def setUp(self):
+        super().setUp()
+        self.party = self.fixtures['party111']
+        self.proj = self.fixtures['proj11']
+        self.data = {
+            'name': self.party.name,
+            'project': self.proj.pk,
+            'attrs::dob': '1975-11-06',
+            'attrs::gender': 'female',
+            'attrs::education': 'high-school'
+        }
+        self.unbound_data = {
+            'name': 'New party',
+            'project': self.proj.pk,
+            'attrs::dob': '1976-10-15',
+            'attrs::gender': 'male',
+            'attrs::education': 'none'
+        }
 
-#     def _save(self, data, count=1):
-#         form = PartyForm(data, instance=self.party)
-#         form.save()
-#         assert form.is_valid() is True
+    def _count(self, count):
+        assert Party.objects.count() == count
 
-#     def test_form_save_valid(self):
-#         self._save(self.data)
+    def test_form_save_bound_valid(self):
+        self._count(45)
+        form = PartyForm(self.data, instance=self.party)
+        assert form.is_valid() is True
+        form.save()
+        self._count(45)
+
+    def test_form_save_bound_missing_required_attribute(self):
+        self._count(45)
+        del self.data['attrs::dob']
+        form = PartyForm(self.data, instance=self.party)
+        assert form.is_valid() is False
+        assert len(form.errors) == 1
+        assert form.errors['attrs::dob'] == ['This field is required.']
+        self._count(45)
+
+    def test_form_save_unbound_valid(self):
+        self._count(45)
+        form = PartyForm(
+            self.unbound_data,
+            schema_selectors=(
+                {'name': None, 'selector': self.proj.organization.pk},
+                {'name': 'project', 'selector': self.proj.pk,
+                 'value': self.proj}
+            )
+        )
+        assert form.is_valid() is True
+        form.save()
+        self._count(46)

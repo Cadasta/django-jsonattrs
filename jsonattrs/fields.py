@@ -1,5 +1,6 @@
 from collections import UserDict
-# import json
+import json
+from datetime import date, datetime
 
 from psycopg2.extras import Json
 
@@ -36,8 +37,6 @@ class JSONAttributes(UserDict):
             self._schemas = schemas
         else:
             self._schemas = Schema.objects.from_instance(self._instance)
-        if self._schemas is None:
-            return
         self._setup = True
 
         # Extract schema attributes, names of required attributes and
@@ -82,6 +81,22 @@ class JSONAttributes(UserDict):
         return self._attrs
 
 
+# This is needed to provide JSON serialisation for date objects
+# whenever they're saved to JSON attribute fields.  This function is
+# passed as the custom "dumps" method for psycopg2's Json class to
+# use.
+
+def json_serialiser(obj):
+    return json.dumps(
+        obj,
+        default=lambda obj: (
+            obj.isoformat()
+            if isinstance(obj, datetime) or isinstance(obj, date)
+            else None
+        )
+    )
+
+
 class JSONAttributeField(JSONField):
     description = _('A managed JSON attribute set')
 
@@ -96,12 +111,14 @@ class JSONAttributeField(JSONField):
         return value
 
     def get_prep_value(self, value):
-        return Json(dict(value)) if value is not None else value
+        return (Json(dict(value), dumps=json_serialiser)
+                if value is not None else value)
 
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type in ('has_key', 'has_keys', 'has_any_keys'):
             return value
-        return (Json(dict(value)) if isinstance(value, dict)
+        return (Json(dict(value), dumps=json_serialiser)
+                if isinstance(value, dict)
                 else super().get_prep_lookup(lookup_type, value))
 
     # def validate(self, value, model_instance):

@@ -40,7 +40,7 @@ class AttributeModelForm(forms.ModelForm):
         attrs = None
         attrvals = getattr(self.instance, self.attributes_field)
         schemas = None
-        if self.instance.pk is not None:
+        if self.instance.pk:
             schemas = Schema.objects.from_instance(self.instance)
         elif schema_selectors is not None:
             selectors = []

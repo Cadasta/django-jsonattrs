@@ -33,7 +33,8 @@ DEFAULT_SCHEMATA = [
      'content_type': 'party',
      'selectors': (),
      'fields': [
-         {'name': 'dob', 'long_name': 'Date of birth', 'attr_type': 'date'},
+         {'name': 'dob', 'long_name': 'Date of birth',
+          'attr_type': 'date', 'required': True},
          {'name': 'gender', 'long_name': 'Gender', 'attr_type': 'text'}
      ]},
 

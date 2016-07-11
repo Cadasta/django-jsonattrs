@@ -57,7 +57,7 @@ class AttributeModelForm(forms.ModelForm):
         for name, attr in attrs.items():
             fieldname = self.attributes_field + '::' + name
             atype = attr.attr_type
-            args = {'label': attr.long_name}
+            args = {'label': attr.long_name, 'required': False}
             field = form_field_from_name(atype.form_field)
             if atype.form_field == 'CharField':
                 args['max_length'] = 32

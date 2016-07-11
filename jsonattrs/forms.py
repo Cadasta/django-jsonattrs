@@ -66,14 +66,21 @@ class AttributeModelForm(forms.ModelForm):
                 args['choices'] = list(map(lambda c: (c, c), attr.choices))
             if atype.form_field == 'BooleanField':
                 args['required'] = False
-                if len(attr.default) > 0:
-                    args['initial'] = (attr.default != 'False')
+                self.set_default(args, attr, boolean=True)
             elif attr.required:
                 args['required'] = True
-                if len(attr.default) > 0:
-                    args['initial'] = attr.default
+                self.set_default(args, attr)
+            else:
+                self.set_default(args, attr)
             self.set_initial(args, name, attr, attrvals)
             self.fields[fieldname] = field(**args)
+
+    def set_default(self, args, attr, boolean=False):
+        if len(attr.default) > 0:
+            if boolean:
+                args['initial'] = (attr.default != 'False')
+            else:
+                args['initial'] = attr.default
 
     def set_initial(self, args, name, attr, attrvals):
         if name in attrvals:

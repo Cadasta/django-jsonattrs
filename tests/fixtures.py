@@ -79,7 +79,6 @@ def create_fixtures(do_schemas=True):
     schres = {}
 
     if do_schemas:
-        loadattrtypes.run(delete=True)
         loadattrtypes.run()
         schres.update(create_schema_fixtures(DEFAULT_SCHEMATA))
 

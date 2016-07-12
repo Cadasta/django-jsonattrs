@@ -105,10 +105,11 @@ def compose_schemas(*schemas):
 
 def create_attribute_type(name, label, form_field,
                           widget=None, validator_re=None, validator_type=None):
-    AttributeType.objects.create(
-        name=name, label=label, form_field=form_field, widget=widget,
-        validator_re=validator_re, validator_type=validator_type
-    )
+    if not AttributeType.objects.filter(name=name).exists():
+        AttributeType.objects.create(
+            name=name, label=label, form_field=form_field, widget=widget,
+            validator_re=validator_re, validator_type=validator_type
+        )
 
 
 class AttributeType(models.Model):

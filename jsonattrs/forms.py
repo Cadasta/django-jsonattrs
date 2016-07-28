@@ -85,10 +85,11 @@ class AttributeModelForm(forms.ModelForm):
     def set_initial(self, args, name, attr, attrvals):
         if name in attrvals:
             if attr.attr_type.form_field == 'BooleanField':
-                if isinstance(attrvals[name], bool):
-                    args['initial'] = attrvals[name]
-                else:
-                    args['initial'] = attrvals[name] != 'False'
+                args['initial'] = (
+                    attrvals[name]
+                    if isinstance(attrvals[name], bool)
+                    else attrvals[name] != 'False'
+                )
             else:
                 args['initial'] = attrvals[name]
 

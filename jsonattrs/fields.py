@@ -5,6 +5,7 @@ from datetime import date, datetime
 from psycopg2.extras import Json
 
 # from django.core import exceptions
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields import JSONField
 
@@ -23,6 +24,7 @@ class JSONAttributes(UserDict):
         if dict is None or len(dict) == 0:
             self._setup = False
         else:
+            self._check_required_keys(dict.keys())
             for k, v in dict.items():
                 self._check_key(k)
                 self._attrs[k].validate(v)
@@ -48,7 +50,17 @@ class JSONAttributes(UserDict):
         # Fill in defaulted attributes.
         if len(self._required_attrs) > 0:
             for key in self._required_attrs:
-                self[key] = self._attrs[key].default
+                if (self._attrs[key].default is not None and
+                   self._attrs[key].default != ''):
+                    self[key] = self._attrs[key].default
+
+    def _check_required_keys(self, keys):
+        for req in self._required_attrs:
+            if req not in keys and req not in self._default_attrs:
+                raise ValidationError(
+                    _('Missing required field %(field)s'),
+                    params={'field': req}
+                )
 
     def _check_key(self, key):
         self.setup_schema()

@@ -19,7 +19,7 @@ class FieldSchemaTest(FieldTestBase):
     def test_schema_composition(self):
         tstparty = Party.objects.create(
             project=self.fixtures['proj11'],
-            name='Bilbo Baggins', attrs={}
+            name='Bilbo Baggins', attrs={'dob': '1972-05-10'}
         )
         assert 'dob' in tstparty.attrs.attributes
         assert 'gender' in tstparty.attrs.attributes
@@ -90,22 +90,40 @@ class FieldAttributeTest(FieldTestBase):
                 address='Bag End, Hobbiton', attrs={'quality': 'foo'}
             )
 
+    def test_attributes_required_validation(self):
+        with pytest.raises(ValidationError):
+            Party.objects.create(
+                project=self.fixtures['proj11'],
+                name='Bilbo Baggins',
+                attrs={'homeowner': True}
+            )
+        with pytest.raises(ValidationError):
+            party = Party.objects.create(
+                project=self.fixtures['proj11'],
+                name='Bilbo Baggins',
+                attrs={'homeowner': True, 'dob': '1975-11-06'}
+            )
+            party.attrs['dob'] = None
+
     def test_attributes_other_validation(self):
         tstparty1 = Party.objects.create(
             project=self.fixtures['proj11'],
-            name='Bilbo Baggins', attrs={'homeowner': True}
+            name='Bilbo Baggins',
+            attrs={'homeowner': True, 'dob': '1972-05-10'}
         )
         assert len(tstparty1.attrs.attributes) == 4
         assert tstparty1.attrs['homeowner'] is True
         with pytest.raises(ValidationError):
             Party.objects.create(
                 project=self.fixtures['proj11'],
-                name='Bilbo Baggins', attrs={'homeowner': 'foo'}
+                name='Bilbo Baggins',
+                attrs={'homeowner': 'foo', 'dob': '1989-10-12'}
             )
         with pytest.raises(ValidationError):
             Party.objects.create(
                 project=self.fixtures['proj11'],
-                name='Bilbo Baggins', attrs={'homeowner': 3}
+                name='Bilbo Baggins',
+                attrs={'homeowner': 3, 'dob': '1989-10-12'}
             )
 
     def test_attributes_lookup_keys(self):

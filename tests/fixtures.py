@@ -5,9 +5,9 @@ from django.contrib.contenttypes.models import ContentType
 from jsonattrs.models import Schema, Attribute, AttributeType
 from jsonattrs.management.commands import loadattrtypes
 
-from .models import Organization, Project
+from .models import Organization, Project, Party
 from .factories import (
-    OrganizationFactory, ProjectFactory, PartyFactory, ParcelFactory
+    OrganizationFactory, ProjectFactory, ParcelFactory
 )
 
 
@@ -111,9 +111,12 @@ def create_fixtures(do_schemas=True):
                 )
                 objres['parcel{}{}{}'.format(iorg, iprj, ient)] = parcel
 
-                party = PartyFactory.create(
+                attrs = {}
+                if iorg == 1 and iprj == 1 and do_schemas:
+                    attrs = {'dob': '1975-11-06'}
+                party = Party.objects.create(
                     name='Party #{}.{}.{}'.format(iorg, iprj, ient),
-                    project=proj
+                    project=proj, attrs=attrs
                 )
                 objres['party{}{}{}'.format(iorg, iprj, ient)] = party
 

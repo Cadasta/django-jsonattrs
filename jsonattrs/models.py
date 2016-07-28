@@ -98,7 +98,8 @@ def compose_schemas(*schemas):
             else:
                 attrs[sa.name] = sa
     required_attrs = {n for n, a in attrs.items() if a.required}
-    default_attrs = {n for n, a in attrs.items() if a.default is not None}
+    default_attrs = {n for n, a in attrs.items()
+                     if a.default is not None and a.default != ''}
 
     return attrs, required_attrs, default_attrs
 
@@ -195,6 +196,12 @@ class Attribute(models.Model):
         unique_together = (('schema', 'index'), ('schema', 'name'))
 
     def validate(self, value):
+        if (self.required and self.default == '' and
+           (value is None or value == '')):
+            raise ValidationError(
+                _('Missing required field %(field)s'),
+                params={'field': self.name}
+            )
         if self.choices is not None and self.choices != []:
             if value not in self.choices:
                 raise ValidationError(
@@ -215,13 +222,3 @@ class Attribute(models.Model):
                     _('Validation failed for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}
                 )
-
-    def __str__(self):
-        return '<{} attribute {}: required={} default={}>'.format(
-            self.attr_type.form_field,
-            self.name,
-            self.required, self.default
-        )
-
-    def __repr__(self):
-        return str(self)

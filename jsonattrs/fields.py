@@ -4,12 +4,13 @@ from datetime import date, datetime
 
 from psycopg2.extras import Json
 
-# from django.core import exceptions
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
+from django.db import transaction
 from django.contrib.postgres.fields import JSONField
 
 from .models import Schema, compose_schemas
+from .exceptions import SchemaUpdateConflict, SchemaUpdateException
 
 
 class JSONAttributes(UserDict):
@@ -17,6 +18,7 @@ class JSONAttributes(UserDict):
         self._schemas = None
         self._instance = None
         self._setup = False
+        self._saved_selectors = None
         super().__init__(*args, **kwargs)
 
     def setup_from_dict(self, dict):
@@ -54,6 +56,53 @@ class JSONAttributes(UserDict):
                    self._attrs[key].default != ''):
                     self[key] = self._attrs[key].default
 
+    def _pre_save_selector_check(self):
+        old_selectors = self._saved_selectors
+        new_selectors = Schema.objects._get_selectors(self._instance)
+        self._saved_selectors = new_selectors
+        if (old_selectors is None or
+           not any([n != o for n, o in zip(old_selectors, new_selectors)])):
+            return
+        self._setup = False
+        schemas_s = self._schemas
+        attrs_s = self._attrs
+        required_attrs_s = self._required_attrs
+        default_attrs_s = self._default_attrs
+        self.setup_schema()
+        conflicts = self._attr_list_conflicts(
+            attrs_s, required_attrs_s, default_attrs_s,
+            self._attrs, self._required_attrs, self._default_attrs
+        )
+        if conflicts is not None and len(conflicts) > 0:
+            self._schemas = schemas_s
+            self._attrs = attrs_s
+            self._required_attrs = required_attrs_s
+            self._default_attrs = default_attrs_s
+            raise SchemaUpdateException(conflicts=conflicts)
+
+    def _attr_list_conflicts(self,
+                             old_attrs, old_req, old_def,
+                             new_attrs, new_req, new_def):
+        conflicts = []
+        for aname, a in new_attrs.items():
+            val = super().get(aname, None)
+            if aname not in old_attrs:
+                if a.required and (a.default is None or len(a.default) == 0):
+                    conflicts.append(
+                        SchemaUpdateConflict(aname, 'required_no_default')
+                    )
+            else:
+                olda = old_attrs[aname]
+                if not types_compatible(a.attr_type, olda.attr_type, val):
+                    conflicts.append(
+                        SchemaUpdateConflict(aname, 'incompatible_type')
+                    )
+                if not choices_compatible(a.choices, olda.choices, val):
+                    conflicts.append(
+                        SchemaUpdateConflict(aname, 'incompatible_choices')
+                    )
+        return conflicts
+
     def _check_required_keys(self, keys):
         for req in self._required_attrs:
             if req not in keys and req not in self._default_attrs:
@@ -64,7 +113,7 @@ class JSONAttributes(UserDict):
 
     def _check_key(self, key):
         self.setup_schema()
-        if key not in self._attrs:
+        if key not in self._attrs and key not in self:
             raise KeyError(key)
 
     def __getitem__(self, key):
@@ -91,6 +140,26 @@ class JSONAttributes(UserDict):
     def attributes(self):
         self.setup_schema()
         return self._attrs
+
+
+def types_compatible(new_type, old_type, value):
+    return (new_type == old_type or
+            new_type.name == 'text' or new_type.name == 'text_multiline')
+
+
+def choices_compatible(new_choices, old_choices, value):
+    return new_choices is None or len(new_choices) == 0 or value in new_choices
+
+
+def schema_update_conflicts(instance):
+    if not hasattr(instance, '_attr_field'):
+        raise ValueError("instance doesn't have an attribute field")
+    conflicts = []
+    try:
+        instance._attr_field._pre_save_selector_check()
+    except SchemaUpdateException as exc_info:
+        conflicts = exc_info.conflicts
+    return conflicts
 
 
 # This is needed to provide JSON serialisation for date objects
@@ -123,8 +192,9 @@ class JSONAttributeField(JSONField):
         return value
 
     def get_prep_value(self, value):
-        return (Json(dict(value), dumps=json_serialiser)
-                if value is not None else value)
+        if value is None:
+            return None
+        return Json(dict(value), dumps=json_serialiser)
 
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type in ('has_key', 'has_keys', 'has_any_keys'):

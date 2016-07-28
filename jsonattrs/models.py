@@ -20,23 +20,8 @@ class SchemaManager(models.Manager):
     def lookup(self, instance=None, content_type=None, selectors=None):
         if instance is not None and content_type is None:
             content_type = ContentType.objects.get_for_model(instance)
-
         if selectors is None and instance is not None:
-            # Lazily pre-process per-content type selector definitions.
-            if len(self.content_type_to_selectors) == 0:
-                for k, v in settings.JSONATTRS_SCHEMA_SELECTORS.items():
-                    a, m = k.split('.')
-                    self.content_type_to_selectors[
-                        ContentType.objects.get(app_label=a, model=m)
-                    ] = v
-
-            # Build full list of selectors from instance.
-            selectors = []
-            for s in self.content_type_to_selectors[content_type]:
-                selector = instance
-                for step in s.split('.'):
-                    selector = getattr(selector, step, None)
-                selectors.append(str(selector))
+            selectors = self._get_selectors(instance, content_type)
         selectors = tuple(selectors)
         if any(s is None for s in selectors):
             return None
@@ -58,6 +43,27 @@ class SchemaManager(models.Manager):
 
     def from_instance(self, instance):
         return self.lookup(instance=instance)
+
+    def _get_selectors(self, instance, content_type=None):
+        if content_type is None:
+            content_type = ContentType.objects.get_for_model(instance)
+
+        # Lazily pre-process per-content type selector definitions.
+        if len(self.content_type_to_selectors) == 0:
+            for k, v in settings.JSONATTRS_SCHEMA_SELECTORS.items():
+                a, m = k.split('.')
+                self.content_type_to_selectors[
+                    ContentType.objects.get(app_label=a, model=m)
+                ] = v
+
+        # Build full list of selectors from instance.
+        selectors = []
+        for s in self.content_type_to_selectors[content_type]:
+            selector = instance
+            for step in s.split('.'):
+                selector = getattr(selector, step, None)
+            selectors.append(str(selector))
+        return tuple(selectors)
 
 
 class Schema(models.Model):

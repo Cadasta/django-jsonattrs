@@ -167,3 +167,137 @@ def create_schema_fixtures(schemata):
             )
 
     return res
+
+
+def create_labelled_schema(label, field_mod=None):
+    content_type = ContentType.objects.get(app_label='tests', model='labelled')
+    schema = Schema.objects.create(
+        content_type=content_type, selectors=(label,)
+    )
+    text_type = AttributeType.objects.get(name='text')
+    int_type = AttributeType.objects.get(name='integer')
+    fields = {}
+    fields['f1'] = {'attr_type': text_type}
+    fields['f2'] = {'attr_type': text_type, 'required': True}
+    fields['f3'] = {'attr_type': int_type}
+    fields['f4'] = {'attr_type': text_type,
+                    'choices': ('abc', 'def', 'ghi', 'jkl')}
+    if field_mod == '-f1':
+        del fields['f1']
+    elif field_mod == '-f2':
+        del fields['f2']
+    elif field_mod == '+f5-nonreq':
+        fields['f5'] = {'attr_type': text_type}
+    elif field_mod == '+f5-req-no-default':
+        fields['f5'] = {'attr_type': text_type, 'required': True}
+    elif field_mod == '+f5-req-default':
+        fields['f5'] = {'attr_type': text_type, 'required': True,
+                        'default': 'default'}
+    elif field_mod == 'f3-text':
+        fields['f3']['attr_type'] = text_type
+    elif field_mod == 'f2-int':
+        fields['f2']['attr_type'] = int_type
+    elif field_mod == 'f4-remove-choices':
+        del fields['f4']['choices']
+    elif field_mod == 'f1-add-choices':
+        fields['f1']['choices'] = ('ABC', 'DEF', 'GHI', 'JKL')
+    elif field_mod == 'f4-change-choices':
+        fields['f4']['choices'] = ('ghi', 'jkl', 'mno', 'pqr')
+    idx = 1
+    for n, f in fields.items():
+        args = {}
+        args['schema'] = schema
+        args['name'] = n
+        args['long_name'] = n
+        args['index'] = idx
+        idx += 1
+        args['attr_type'] = f['attr_type']
+        if 'required' in f:
+            args['required'] = f['required']
+        if 'default' in f:
+            args['default'] = f['default']
+        if 'choices' in f:
+            args['choices'] = f['choices']
+        Attribute.objects.create(**args)
+
+
+def create_labelled_schemata():
+    loadattrtypes.run()
+
+    # Initial schema:
+    #  f1: non-required string field
+    #  f2: required string field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    create_labelled_schema('initial')
+
+    # Remove non-required field schema:
+    #  f2: required string field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    create_labelled_schema('remove_non_required', '-f1')
+
+    # Remove required field schema:
+    #  f1: non-required string field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    create_labelled_schema('remove_required', '-f2')
+
+    # Add new non-required field schema:
+    #  f1: non-required string field
+    #  f2: required string field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    #  f5: non-required integer field
+    create_labelled_schema('new_non_required', '+f5-nonreq')
+
+    # Add new required field (no default) schema:
+    #  f1: non-required string field
+    #  f2: required string field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    #  f5: required integer field (no default)
+    create_labelled_schema('new_required_no_default', '+f5-req-no-default')
+
+    # Add new required field (default) schema:
+    #  f1: non-required string field
+    #  f2: required string field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    #  f5: required integer field (default)
+    create_labelled_schema('new_required_default', '+f5-req-default')
+
+    # Change field type (compatible) schema:
+    #  f1: non-required string field
+    #  f2: required string field
+    #  f3: non-required string field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    create_labelled_schema('type_compatible', 'f3-text')
+
+    # Change field type (incompatible) schema:
+    #  f1: non-required string field
+    #  f2: required integer field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    create_labelled_schema('type_incompatible', 'f2-int')
+
+    # Remove choices list schema:
+    #  f1: non-required string field
+    #  f2: required integer field
+    #  f3: non-required integer field
+    #  f4: non-required string field
+    create_labelled_schema('remove_choices', 'f4-remove-choices')
+
+    # Add choices list schema:
+    #  f1: choices field ('ABC', 'DEF', 'GHI', 'JKL')
+    #  f2: required integer field
+    #  f3: non-required integer field
+    #  f4: choices field ('abc', 'def', 'ghi', 'jkl')
+    create_labelled_schema('add_choices', 'f1-add-choices')
+
+    # Change choices list schema:
+    #  f1: non-required string field
+    #  f2: required integer field
+    #  f3: non-required integer field
+    #  f4: choices field ('ghi', 'jkl', 'mno', 'pqr')
+    create_labelled_schema('change_choices', 'f4-change-choices')

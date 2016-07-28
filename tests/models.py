@@ -61,3 +61,10 @@ class Parcel(models.Model):
 
     def get_absolute_url(self):
         return reverse('parcel-detail', kwargs={'pk': self.pk})
+
+
+@fix_model_for_attributes
+class Labelled(models.Model):
+    label = models.CharField(max_length=64)
+    name = models.CharField(max_length=64)
+    attrs = JSONAttributeField()

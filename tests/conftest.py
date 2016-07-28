@@ -20,7 +20,8 @@ def pytest_configure():
             'tests.organization': (),
             'tests.project': ('organization.pk',),
             'tests.party': ('project.organization.pk', 'project.pk'),
-            'tests.parcel': ('project.organization.pk', 'project.pk', 'type')
+            'tests.parcel': ('project.organization.pk', 'project.pk', 'type'),
+            'tests.labelled': ('label',)
         },
         SITE_ID=1,
         SECRET_KEY='not very secret in tests',

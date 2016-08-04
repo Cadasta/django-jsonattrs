@@ -55,7 +55,7 @@ class JSONAttributes(UserDict):
                    self._attrs[key].default != ''):
                     self[key] = self._attrs[key].default
 
-    def _pre_save_selector_check(self):
+    def _pre_save_selector_check(self, strict=False):
         old_selectors = self._saved_selectors
         new_selectors = Schema.objects._get_selectors(self._instance)
         self._saved_selectors = new_selectors
@@ -68,10 +68,8 @@ class JSONAttributes(UserDict):
         required_attrs_s = self._required_attrs
         default_attrs_s = self._default_attrs
         self.setup_schema()
-        conflicts = self._attr_list_conflicts(
-            attrs_s, required_attrs_s, default_attrs_s,
-            self._attrs, self._required_attrs, self._default_attrs
-        )
+        conflicts = self._attr_list_conflicts(attrs_s, self._attrs,
+                                              strict=strict)
         if conflicts is not None and len(conflicts) > 0:
             self._schemas = schemas_s
             self._attrs = attrs_s
@@ -79,9 +77,7 @@ class JSONAttributes(UserDict):
             self._default_attrs = default_attrs_s
             raise SchemaUpdateException(conflicts=conflicts)
 
-    def _attr_list_conflicts(self,
-                             old_attrs, old_req, old_def,
-                             new_attrs, new_req, new_def):
+    def _attr_list_conflicts(self, old_attrs, new_attrs, strict=False):
         conflicts = []
         for aname, a in new_attrs.items():
             val = super().get(aname, None)
@@ -96,7 +92,8 @@ class JSONAttributes(UserDict):
                     conflicts.append(
                         SchemaUpdateConflict(aname, 'incompatible_type')
                     )
-                if not choices_compatible(a.choices, olda.choices, val):
+                if (strict and
+                   not choices_compatible(a.choices, olda.choices, val)):
                     conflicts.append(
                         SchemaUpdateConflict(aname, 'incompatible_choices')
                     )
@@ -155,7 +152,7 @@ def schema_update_conflicts(instance):
         raise ValueError("instance doesn't have an attribute field")
     conflicts = []
     try:
-        instance._attr_field._pre_save_selector_check()
+        instance._attr_field._pre_save_selector_check(strict=True)
     except SchemaUpdateException as exc_info:
         conflicts = exc_info.conflicts
     return conflicts

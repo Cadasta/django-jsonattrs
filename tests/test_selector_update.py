@@ -173,12 +173,8 @@ class LabelledSelectorUpdateTest(LabelledModelTest):
 
     def test_add_choices_list_exclude_current(self):
         self.obj.attrs['f1'] = 'XYZ'
-        with pytest.raises(SchemaUpdateException) as exc_info:
-            self.doit('add_choices',
-                      present=('f1', 'f2', 'f3', 'f4'))
-        assert exc_info.value.messages == [
-            "Choices list for field 'f1' doesn't include current field value"
-        ]
+        self.doit('add_choices',
+                  present=('f1', 'f2', 'f3', 'f4'))
 
     def test_change_choices_list_include_current(self):
         self.obj.attrs['f4'] = 'ghi'
@@ -186,12 +182,8 @@ class LabelledSelectorUpdateTest(LabelledModelTest):
                   present=('f1', 'f2', 'f3', 'f4'))
 
     def test_change_choices_list_exclude_current(self):
-        with pytest.raises(SchemaUpdateException) as exc_info:
-            self.doit('change_choices',
-                      present=('f1', 'f2', 'f3', 'f4'))
-        assert exc_info.value.messages == [
-            "Choices list for field 'f4' doesn't include current field value"
-        ]
+        self.doit('change_choices',
+                  present=('f1', 'f2', 'f3', 'f4'))
 
 
 class LabelledSchemaUpdateConflictCheckTest(LabelledModelTest):

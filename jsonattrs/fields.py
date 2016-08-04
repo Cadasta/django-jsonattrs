@@ -6,7 +6,6 @@ from psycopg2.extras import Json
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django.db import transaction
 from django.contrib.postgres.fields import JSONField
 
 from .models import Schema, compose_schemas

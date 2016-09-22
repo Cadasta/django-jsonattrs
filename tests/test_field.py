@@ -82,12 +82,28 @@ class FieldAttributeTest(FieldTestBase):
             project=self.fixtures['proj11'],
             address='Bag End, Hobbiton', attrs={'quality': 'point'}
         )
-        assert len(tstparcel1.attrs.attributes) == 1
+        assert len(tstparcel1.attrs.attributes) == 2
         assert tstparcel1.attrs['quality'] == 'point'
         with pytest.raises(ValidationError):
             Parcel.objects.create(
                 project=self.fixtures['proj11'],
                 address='Bag End, Hobbiton', attrs={'quality': 'foo'}
+            )
+
+        tstparcel2 = Parcel.objects.create(
+            project=self.fixtures['proj11'],
+            address='The Shire',
+            attrs={
+                'quality': 'point',
+                'infrastructure': ['water', 'food']
+                }
+        )
+        assert len(tstparcel1.attrs.attributes) == 2
+        assert tstparcel2.attrs['infrastructure'] == ['water', 'food']
+        with pytest.raises(ValidationError):
+            Parcel.objects.create(
+                project=self.fixtures['proj11'],
+                address='The Shire', attrs={'infrastructure': ['foo', 'bar']}
             )
 
     def test_attributes_required_validation(self):

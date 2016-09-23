@@ -188,19 +188,22 @@ class AttributeManager(models.Manager):
     def create(self, *args, **kwargs):
         choices = kwargs.get('choices', None)
         choice_labels = kwargs.get('choice_labels', None)
-        if choice_labels is not None:
-            if len(choices) != len(choice_labels):
-                raise ValueError("lengths of choices and choice_labels "
-                                 "don't match for Attribute")
-            if not all([isinstance(l, str) for l in choice_labels]):
-                raise ValueError("non-string choice label in Attribute")
-        else:
-            allstr = all([isinstance(c, str) for c in choices])
-            alltuple2 = all([isinstance(c, tuple) and len(c) == 2 and
-                             isinstance(c[1], str)
-                             for c in choices])
-            if not allstr and not alltuple2:
-                raise ValueError("invalid format for choices in Attribute")
+        if choices is not None:
+            if choice_labels is not None:
+                if len(choices) != len(choice_labels):
+                    raise ValueError("lengths of choices and choice_labels "
+                                     "don't match for Attribute")
+                if not all([isinstance(l, str) for l in choice_labels]):
+                    raise ValueError("non-string choice label in Attribute")
+            else:
+                allstr = all([isinstance(c, str) for c in choices])
+                alltuple2 = all([isinstance(c, tuple) and len(c) == 2 and
+                                 isinstance(c[1], str)
+                                 for c in choices])
+                if not allstr and not alltuple2:
+                    raise ValueError("invalid format for choices in Attribute")
+        elif choice_labels is not None:
+            raise ValueError("choice_labels but no choices in Attribute")
         return super().create(*args, **kwargs)
 
 

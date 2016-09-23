@@ -80,6 +80,7 @@ class AttributeModelForm(forms.ModelForm):
             else:
                 self.set_default(args, attr)
             self.set_initial(args, name, attr, attrvals)
+            print('FIELD:', args)
             self.fields[fieldname] = field(**args)
 
     def set_default(self, args, attr, boolean=False):

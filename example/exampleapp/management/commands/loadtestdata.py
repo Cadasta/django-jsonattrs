@@ -172,8 +172,9 @@ SPECIFIC_SCHEMATA = [
           'attr_type': 'boolean', 'required': True, 'default': False},
          {'name': 'certification', 'long_name': 'CEng certification level',
           'attr_type': 'select_one',
-          'choices': ['None', 'Apprentice', 'Journeyman', 'Master'],
-          'required': True, 'default': 'None'}
+          'choices': ['-', 'A', 'J', 'M'],
+          'choice_labels': ['None', 'Apprentice', 'Journeyman', 'Master'],
+          'required': True, 'default': '-'}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil', 'Bridges'),
@@ -231,6 +232,7 @@ def create_schema(schema):
     )
     for field, index in zip(schema['fields'], itertools.count(1)):
         choices = field.get('choices', [])
+        choice_labels = field.get('choice_labels', None)
         default = field.get('default', '')
         required = field.get('required', False)
         omit = field.get('omit', False)
@@ -238,8 +240,8 @@ def create_schema(schema):
             schema=schema_obj,
             name=field['name'], long_name=field['long_name'],
             attr_type=AttributeType.objects.get(name=field['attr_type']),
-            index=index, choices=choices, default=default,
-            required=required, omit=omit
+            index=index, choices=choices, choice_labels=choice_labels,
+            default=default, required=required, omit=omit
         )
 
 

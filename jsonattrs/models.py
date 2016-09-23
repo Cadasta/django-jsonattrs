@@ -184,6 +184,26 @@ def find_class(name):
     return [c for c in class_cache if c.__name__ == name][0]
 
 
+class AttributeManager(models.Manager):
+    def create(self, *args, **kwargs):
+        choices = kwargs.get('choices', None)
+        choice_labels = kwargs.get('choice_labels', None)
+        if choice_labels is not None:
+            if len(choices) != len(choice_labels):
+                raise ValueError("lengths of choices and choice_labels "
+                                 "don't match for Attribute")
+            if not all([isinstance(l, str) for l in choice_labels]):
+                raise ValueError("non-string choice label in Attribute")
+        else:
+            allstr = all([isinstance(c, str) for c in choices])
+            alltuple2 = all([isinstance(c, tuple) and len(c) == 2 and
+                             isinstance(c[1], str)
+                             for c in choices])
+            if not allstr and not alltuple2:
+                raise ValueError("invalid format for choices in Attribute")
+        return super().create(*args, **kwargs)
+
+
 class Attribute(models.Model):
     schema = models.ForeignKey(
         Schema, related_name='attributes', on_delete=models.CASCADE
@@ -193,6 +213,7 @@ class Attribute(models.Model):
     attr_type = models.ForeignKey(AttributeType, on_delete=models.CASCADE)
     index = models.IntegerField()
     choices = ArrayField(models.CharField(max_length=256), null=True)
+    choice_labels = ArrayField(models.CharField(max_length=512), null=True)
     default = models.CharField(max_length=256, blank=True)
     required = models.BooleanField(default=False)
     omit = models.BooleanField(default=False)
@@ -200,6 +221,8 @@ class Attribute(models.Model):
     class Meta:
         ordering = ('schema', 'index')
         unique_together = (('schema', 'index'), ('schema', 'name'))
+
+    objects = AttributeManager()
 
     def validate(self, value):
         if (self.required and self.default == '' and
@@ -228,3 +251,11 @@ class Attribute(models.Model):
                     _('Validation failed for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}
                 )
+
+    def choice_dict(self):
+        if self.choices is None or self.choices == []:
+            return None
+        if self.choice_labels is None or self.choice_labels == []:
+            return {c: c for c in self.choices}
+        else:
+            return {c: l for c, l in zip(self.choices, self.choice_labels)}

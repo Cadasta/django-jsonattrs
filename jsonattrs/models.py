@@ -188,7 +188,7 @@ class AttributeManager(models.Manager):
     def create(self, *args, **kwargs):
         choices = kwargs.get('choices', None)
         choice_labels = kwargs.get('choice_labels', None)
-        if choices is not None:
+        if choices is not None and choices != []:
             if choice_labels is not None:
                 if len(choices) != len(choice_labels):
                     raise ValueError("lengths of choices and choice_labels "
@@ -202,6 +202,8 @@ class AttributeManager(models.Manager):
                                  for c in choices])
                 if not allstr and not alltuple2:
                     raise ValueError("invalid format for choices in Attribute")
+                if alltuple2:
+                    kwargs['choices'], kwargs['choice_labels'] = zip(*choices)
         elif choice_labels is not None:
             raise ValueError("choice_labels but no choices in Attribute")
         return super().create(*args, **kwargs)

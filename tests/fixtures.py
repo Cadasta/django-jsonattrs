@@ -74,12 +74,13 @@ SPECIFIC_SCHEMATA = [
 ]
 
 
-def create_fixtures(do_schemas=True):
+def create_fixtures(do_schemas=True, load_attr_types=False):
     objres = {}
     schres = {}
 
-    if do_schemas:
+    if do_schemas or load_attr_types:
         loadattrtypes.run()
+    if do_schemas:
         schres.update(create_schema_fixtures(DEFAULT_SCHEMATA))
 
     for iorg in range(1, 4):

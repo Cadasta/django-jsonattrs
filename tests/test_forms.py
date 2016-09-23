@@ -76,6 +76,10 @@ class FormCreationTest(FormTestBase):
         assert 'attrs::quality' in form.fields
         assert isinstance(form.fields['attrs::quality'], forms.ChoiceField)
         assert len(form.fields) == 4
+        labels = [ch[1] for ch in form.fields['attrs::quality'].choices]
+        assert 'None' in labels
+        assert 'Textual' in labels
+        print(labels)
 
     def test_simple_create_unbound_form(self):
         form = ProjectForm(

@@ -44,7 +44,10 @@ DEFAULT_SCHEMATA = [
      'fields': [
          {'name': 'quality', 'long_name': 'Quality of parcel geomeatry',
           'attr_type': 'select_one', 'default': 'none', 'required': True,
-          'choices': ['none', 'text', 'point', 'polygon_low', 'polygon_high']}
+          'choices': ['none', 'text', 'point', 'polygon_low', 'polygon_high'],
+          'choice_labels': ['None', 'Textual', 'Point geometry',
+                            'Low-resolution polygon geometry',
+                            'High-resolution polygon geometry']}
      ]}
 ]
 
@@ -156,6 +159,7 @@ def create_schema_fixtures(schemata):
             long_name = field.get('long_name', field['name'])
             attr_type = AttributeType.objects.get(name=field['attr_type'])
             choices = field.get('choices', [])
+            choice_labels = field.get('choice_labels', None)
             default = field.get('default', '')
             required = field.get('required', False)
             omit = field.get('omit', False)
@@ -163,8 +167,8 @@ def create_schema_fixtures(schemata):
                 schema=schema_obj,
                 name=field['name'], long_name=long_name,
                 attr_type=attr_type, index=index,
-                choices=choices, default=default,
-                required=required, omit=omit
+                choices=choices, choice_labels=choice_labels,
+                default=default, required=required, omit=omit
             )
 
     return res

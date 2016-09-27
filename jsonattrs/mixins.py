@@ -11,6 +11,6 @@ class JsonAttrsMixin:
 
         schemas = Schema.objects.from_instance(obj)
         attrs = [a for s in schemas for a in s.attributes.all()]
-        context[field] = [(a.long_name, obj_attrs.get(a.name, '—'))
+        context[field] = [(a.long_name, a.render(obj_attrs.get(a.name, '—')))
                           for a in attrs if not a.omit]
         return context

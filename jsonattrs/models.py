@@ -257,6 +257,7 @@ class Attribute(models.Model):
                     params={'field': self.name, 'value': value}
                 )
 
+    @property
     def choice_dict(self):
         if self.choices is None or self.choices == []:
             return None
@@ -264,3 +265,9 @@ class Attribute(models.Model):
             return {c: c for c in self.choices}
         else:
             return {c: l for c, l in zip(self.choices, self.choice_labels)}
+
+    def render(self, val):
+        if self.choice_dict is None:
+            return val
+        else:
+            return self.choice_dict.get(val, val)

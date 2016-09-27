@@ -28,20 +28,20 @@ class ChoicesTest(TestCase):
         attr = self.create_attr(
             choices=['a', 'b', 'c']
         )
-        assert attr.choice_dict()['a'] == 'a'
+        assert attr.choice_dict['a'] == 'a'
 
     def test_choices_with_choice_labels(self):
         attr = self.create_attr(
             choices=['a', 'b', 'c'],
             choice_labels=['Choice A', 'Choice B', 'Choice C']
         )
-        assert attr.choice_dict()['a'] == 'Choice A'
+        assert attr.choice_dict['a'] == 'Choice A'
 
     def test_tuple_choices(self):
         attr = self.create_attr(
             choices=[('a', 'Choice A'), ('b', 'Choice B'), ('c', 'Choice C')]
         )
-        assert attr.choice_dict()['a'] == 'Choice A'
+        assert attr.choice_dict['a'] == 'Choice A'
 
     def test_bad_tuple_choices(self):
         with pytest.raises(ValueError):

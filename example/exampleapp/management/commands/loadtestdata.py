@@ -177,9 +177,10 @@ SPECIFIC_SCHEMATA = [
           'required': True, 'default': '-'},
          {'name': 'availability', 'long_name': 'What days can they work?',
           'attr_type': 'select_multiple',
-          'choices': ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
-                      'Friday', 'Saturday', 'Sunday'],
-          'required': True, 'default': '[]'}
+          'choices': ['-', 'm', 't', 'w', 't', 'f', 's', 'su'],
+          'choice_labels': ['None', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+                            'Friday', 'Saturday', 'Sunday'],
+          'required': False, 'default': '[-]'}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil', 'Bridges'),

@@ -63,9 +63,6 @@ class AttributeModelForm(forms.ModelForm):
             #     args['max_length'] = 32
             if (atype.form_field == 'ChoiceField' or
                atype.form_field == 'MultipleChoiceField'):
-                print('attr:', attr)
-                print('attr.choices:', attr.choices)
-                print('attr.choice_labels:', attr.choice_labels)
                 if attr.choice_labels is not None and attr.choice_labels != []:
                     chs = list(zip(attr.choices, attr.choice_labels))
                 else:
@@ -80,7 +77,6 @@ class AttributeModelForm(forms.ModelForm):
             else:
                 self.set_default(args, attr)
             self.set_initial(args, name, attr, attrvals)
-            print('FIELD:', args)
             self.fields[fieldname] = field(**args)
 
     def set_default(self, args, attr, boolean=False):

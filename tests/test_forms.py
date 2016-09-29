@@ -74,8 +74,9 @@ class FormCreationTest(FormTestBase):
         assert 'project' in form.fields
         assert 'type' in form.fields
         assert 'attrs::quality' in form.fields
+        assert 'attrs::infrastructure' in form.fields
         assert isinstance(form.fields['attrs::quality'], forms.ChoiceField)
-        assert len(form.fields) == 4
+        assert len(form.fields) == 5
         labels = [ch[1] for ch in form.fields['attrs::quality'].choices]
         assert 'None' in labels
         assert 'Textual' in labels
@@ -132,8 +133,9 @@ class FormCreationTest(FormTestBase):
         assert 'project' in form.fields
         assert 'type' in form.fields
         assert 'attrs::quality' in form.fields
+        assert 'attrs::infrastructure' in form.fields
         assert isinstance(form.fields['attrs::quality'], forms.ChoiceField)
-        assert len(form.fields) == 4
+        assert len(form.fields) == 5
 
     def test_create_bad_fieldname(self):
         create_attribute_type('bad', 'Bad', 'BadField')

@@ -174,7 +174,12 @@ SPECIFIC_SCHEMATA = [
           'attr_type': 'select_one',
           'choices': ['-', 'A', 'J', 'M'],
           'choice_labels': ['None', 'Apprentice', 'Journeyman', 'Master'],
-          'required': True, 'default': '-'}
+          'required': True, 'default': '-'},
+         {'name': 'availability', 'long_name': 'What days can they work?',
+          'attr_type': 'select_multiple',
+          'choices': ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
+                      'Friday', 'Saturday', 'Sunday'],
+          'required': True, 'default': '[]'}
      ]},
     {'content_type': 'party',
      'selectors': ('Civil', 'Bridges'),

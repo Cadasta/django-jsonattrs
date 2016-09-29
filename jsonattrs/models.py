@@ -237,7 +237,14 @@ class Attribute(models.Model):
                 params={'field': self.name}
             )
         if self.choices is not None and self.choices != []:
-            if value not in self.choices:
+            if type(value) == list:
+                for v in value:
+                    if v not in self.choices:
+                        raise ValidationError(
+                            _('Invalid choice for %(field)s: "%(value)s"'),
+                            params={'field': self.name, 'value': v}
+                        )
+            elif value not in self.choices:
                 raise ValidationError(
                     _('Invalid choice for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}

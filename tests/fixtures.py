@@ -47,7 +47,12 @@ DEFAULT_SCHEMATA = [
           'choices': ['none', 'text', 'point', 'polygon_low', 'polygon_high'],
           'choice_labels': ['None', 'Textual', 'Point geometry',
                             'Low-resolution polygon geometry',
-                            'High-resolution polygon geometry']}
+                            'High-resolution polygon geometry']},
+         {'name': 'infrastructure', 'long_name': 'What structures are nearby?',
+          'attr_type': 'select_multiple', 'default': 'none', 'required': False,
+          'choices': ['water', 'transportation', 'food', 'sanitation'],
+          'choice_lables': ['Water', 'Transportation', 'Food',
+                            'Sanitation Facilities']}
      ]}
 ]
 

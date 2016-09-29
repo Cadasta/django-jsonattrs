@@ -37,16 +37,38 @@ class JsonAttrsMixinTest(TestCase):
             attr_type=models.AttributeType.objects.get(name='text'),
             index=1
         )
+        models.Attribute.objects.create(
+            schema=schema1,
+            name='field_3',
+            long_name='Field 3',
+            attr_type=models.AttributeType.objects.get(name='select_multiple'),
+            choices=['one', 'two', 'three'],
+            choice_labels=['Choice 1', 'Choice 2', 'Choice 3'],
+            index=2,
+        )
+        models.Attribute.objects.create(
+            schema=schema1,
+            name='field_4',
+            long_name='Field 4',
+            attr_type=models.AttributeType.objects.get(name='select_one'),
+            choices=['one', 'two', 'three'],
+            choice_labels=['Choice 1', 'Choice 2', 'Choice 3'],
+            index=3,
+        )
 
         party = factories.PartyFactory.create(
             project=project,
-            attrs={'field_1': 'Some value'}
+            attrs={'field_1': 'Some value',
+                   'field_3': ['one', 'three'],
+                   'field_4': 'two'}
         )
 
         view = JsonAttrsView()
         view.object = party
         context = view.get_context_data()
-        assert len(context['attrs']) == 2
+        assert len(context['attrs']) == 4
 
         assert context['attrs'][0] == ('Field 1', 'Some value')
         assert context['attrs'][1] == ('Field 2', '—')
+        assert context['attrs'][2] == ('Field 3', 'Choice 1, Choice 3')
+        assert context['attrs'][3] == ('Field 4', 'Choice 2')

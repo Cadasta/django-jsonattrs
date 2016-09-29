@@ -277,4 +277,10 @@ class Attribute(models.Model):
         if self.choice_dict is None:
             return val
         else:
-            return self.choice_dict.get(val, val)
+            if type(val) == list:
+                result = []
+                for v in val:
+                    result.append(self.choice_dict.get(v, v))
+                return ', '.join(result)
+            else:
+                return self.choice_dict.get(val, val)

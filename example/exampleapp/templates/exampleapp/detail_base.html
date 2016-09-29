@@ -15,6 +15,7 @@
       <th align="left">Coarse type</th>
       <th align="left">Sub-type</th>
       <th align="left">Choices</th>
+      <th align="left">Choice Labels</th>
       <th align="left">Default</th>
       <th align="left">Required</th>
     </tr>
@@ -24,9 +25,10 @@
     <tr>
       <td>{{ a.name }}</td>
       <td>{{ a.long_name }}</td>
-      <td>{{ a.coarse_type }}</td>
+      <td>{{ a.attr_type.label }}</td>
       <td>{{ a.subtype }}</td>
       <td>{{ a.choices }}</td>
+      <td>{{ a.choice_labels }}</td>
       <td>{{ a.default }}</td>
       <td>{{ a.required }}</td>
     </tr>

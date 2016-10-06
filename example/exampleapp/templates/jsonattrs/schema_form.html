@@ -20,7 +20,6 @@
         <th>Name</th>
         <th>Long name</th>
         <th>Type</th>
-        <th>Subtype</th>
         <th>Choices</th>
         <th>Default</th>
         <th>Required</th>
@@ -41,16 +40,11 @@
           {{ form.name }}
         </td>
         <td>
-          {{ form.long_name.errors.as_ul }}
-          {{ form.long_name }}
+          Long name goes here
         </td>
         <td>
-          {{ form.coarse_type.errors.as_ul }}
-          {{ form.coarse_type }}
-        </td>
-        <td>
-          {{ form.subtype.errors.as_ul }}
-          {{ form.subtype }}
+          {{ form.attr_type.errors.as_ul }}
+          {{ form.attr_type }}
         </td>
         <td>
           {{ form.choices.errors.as_ul }}

@@ -24,7 +24,7 @@ class AttributeInlineFormSet(forms.BaseInlineFormSet):
 
 AttributeFormSet = inlineformset_factory(
     Schema, Attribute, formset=AttributeInlineFormSet,
-    fields=('name', 'long_name', 'attr_type', 'index',
+    fields=('name', 'attr_type', 'index',
             'choices', 'default', 'required', 'omit'),
     widgets={'index': HiddenInput(), 'DELETE': HiddenInput()},
     extra=0

@@ -4,9 +4,11 @@ import re
 from django.db import models
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import get_language
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import JSONField
 
 
 class SchemaManager(models.Manager):
@@ -70,6 +72,7 @@ class Schema(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     selectors = ArrayField(models.CharField(max_length=256, blank=True),
                            default=list, blank=True)
+    default_language = models.CharField(max_length=3, blank=True)
 
     class Meta:
         unique_together = ('content_type', 'selectors')
@@ -126,6 +129,9 @@ class AttributeType(models.Model):
     widget = models.CharField(max_length=256, null=True, blank=True)
     validator_re = models.CharField(max_length=512, null=True, blank=True)
     validator_type = models.CharField(max_length=256, null=True, blank=True)
+
+    def __str__(self):
+        return self.label
 
 
 def create_attribute_types():
@@ -214,11 +220,11 @@ class Attribute(models.Model):
         Schema, related_name='attributes', on_delete=models.CASCADE
     )
     name = models.CharField(max_length=256)
-    long_name = models.CharField(max_length=512, blank=True)
+    long_name_xlat = JSONField()
     attr_type = models.ForeignKey(AttributeType, on_delete=models.CASCADE)
     index = models.IntegerField()
     choices = ArrayField(models.CharField(max_length=256), null=True)
-    choice_labels = ArrayField(models.CharField(max_length=512), null=True)
+    choice_labels_xlat = JSONField(null=True)
     default = models.CharField(max_length=256, blank=True)
     required = models.BooleanField(default=False)
     omit = models.BooleanField(default=False)
@@ -228,6 +234,29 @@ class Attribute(models.Model):
         unique_together = (('schema', 'index'), ('schema', 'name'))
 
     objects = AttributeManager()
+
+    def _trans_field(self, field, base_type):
+        val = getattr(self, field)
+        if isinstance(val, base_type) or val is None:
+            return val
+        else:
+            return val.get(get_language(), val[self.schema.default_language])
+
+    @property
+    def long_name(self):
+        return self._trans_field('long_name_xlat', str)
+
+    @long_name.setter
+    def long_name(self, value):
+        self.long_name_xlat = value
+
+    @property
+    def choice_labels(self):
+        return self._trans_field('choice_labels_xlat', list)
+
+    @choice_labels.setter
+    def choice_labels(self, value):
+        self.choice_labels_xlat = value
 
     def validate(self, value):
         if (self.required and self.default == '' and

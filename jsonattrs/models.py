@@ -252,7 +252,7 @@ class Attribute(models.Model):
 
     @property
     def choice_labels(self):
-        return self._trans_field('choice_labels_xlat', list)
+        return self._trans_field('choice_labels_xlat', (list, tuple))
 
     @choice_labels.setter
     def choice_labels(self, value):

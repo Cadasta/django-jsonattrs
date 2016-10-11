@@ -199,7 +199,8 @@ class AttributeManager(models.Manager):
                 if len(choices) != len(choice_labels):
                     raise ValueError("lengths of choices and choice_labels "
                                      "don't match for Attribute")
-                if not all([isinstance(l, str) for l in choice_labels]):
+                if not all([isinstance(l, str) or isinstance(l, dict)
+                            for l in choice_labels]):
                     raise ValueError("non-string choice label in Attribute")
             else:
                 allstr = all([isinstance(c, str) for c in choices])
@@ -235,16 +236,15 @@ class Attribute(models.Model):
 
     objects = AttributeManager()
 
-    def _trans_field(self, field, base_type):
-        val = getattr(self, field)
-        if isinstance(val, base_type) or val is None:
-            return val
-        else:
-            return val.get(get_language(), val[self.schema.default_language])
-
     @property
     def long_name(self):
-        return self._trans_field('long_name_xlat', str)
+        if self.long_name_xlat is None or isinstance(self.long_name_xlat, str):
+            return self.long_name_xlat
+        else:
+            return self.long_name_xlat.get(
+                get_language(),
+                self.long_name_xlat[self.schema.default_language]
+            )
 
     @long_name.setter
     def long_name(self, value):
@@ -252,7 +252,14 @@ class Attribute(models.Model):
 
     @property
     def choice_labels(self):
-        return self._trans_field('choice_labels_xlat', (list, tuple))
+        if (self.choice_labels_xlat is None or
+            (isinstance(self.choice_labels_xlat, (list, tuple)) and
+             (len(self.choice_labels_xlat) == 0 or
+              isinstance(self.choice_labels_xlat[0], str)))):
+            return self.choice_labels_xlat
+        else:
+            return [cl.get(get_language(), cl[self.schema.default_language])
+                    for cl in self.choice_labels_xlat]
 
     @choice_labels.setter
     def choice_labels(self, value):

@@ -100,3 +100,15 @@ JSONATTRS_SCHEMA_SELECTORS = {
     'exampleapp.party': ('department.division.pk', 'department.pk'),
     'exampleapp.contract': ('department.division.pk', 'department.pk')
 }
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default'
+    },
+    'jsonattrs:schema': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'jsonattrs:schema'
+    }
+}

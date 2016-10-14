@@ -50,6 +50,16 @@ def pytest_configure():
             'jsonattrs',
             'tests',
         ),
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'default'
+            },
+            'jsonattrs:schema': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'jsonattrs:schema'
+            }
+        },
         # LOGGING={
         #     'version': 1,
         #     'disable_existing_loggers': False,

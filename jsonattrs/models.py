@@ -6,18 +6,24 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import get_language
 from django.core.exceptions import ValidationError
+from django.core.cache import caches
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import JSONField
 
 
+def schema_cache_key(content_type, selectors):
+    return ('jsonattrs:schema:' +
+            content_type.app_label + ',' + content_type.model + ':' +
+            ','.join(selectors))
+
+
 class SchemaManager(models.Manager):
-    cache = dict()
     content_type_to_selectors = dict()
 
     @classmethod
     def invalidate_cache(cls):
-        cls.cache = dict()
+        caches['jsonattrs'].clear()
 
     def lookup(self, instance=None, content_type=None, selectors=None):
         if instance is not None and content_type is None:
@@ -30,9 +36,10 @@ class SchemaManager(models.Manager):
 
         # Look for schema list in cache, keyed by content type and
         # selector list.
-        key = (content_type, selectors)
-        if key in self.cache:
-            return self.cache[key]
+        key = schema_cache_key(content_type, selectors)
+        cached = caches['jsonattrs'].get(key)
+        if cached is not None:
+            return cached
 
         # Not in cache: build schema list using increasing selector
         # sequences.
@@ -40,7 +47,7 @@ class SchemaManager(models.Manager):
         schemas = []
         for i in range(len(selectors) + 1):
             schemas += list(base_schemas.filter(selectors=selectors[:i]))
-        self.cache[key] = schemas
+        caches['jsonattrs'].set(key, schemas)
         return schemas
 
     def from_instance(self, instance):

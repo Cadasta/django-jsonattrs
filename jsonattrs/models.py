@@ -205,6 +205,7 @@ def find_class(name):
 
 class AttributeManager(models.Manager):
     def create(self, *args, **kwargs):
+        SchemaManager.invalidate_cache()
         choices = kwargs.get('choices', None)
         choice_labels = kwargs.get('choice_labels', None)
         if choices is not None and choices != []:

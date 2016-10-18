@@ -15,7 +15,7 @@ from django.contrib.postgres.fields import JSONField
 def schema_cache_key(content_type, selectors):
     return ('jsonattrs:schema:' +
             content_type.app_label + ',' + content_type.model + ':' +
-            ','.join(selectors))
+            ','.join([str(s) for s in selectors]))
 
 
 class SchemaManager(models.Manager):

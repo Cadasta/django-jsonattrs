@@ -39,7 +39,9 @@ class SchemaManager(models.Manager):
         key = schema_cache_key(content_type, selectors)
         cached = caches['jsonattrs'].get(key)
         if cached is not None:
+            print('lookup:', key, ' -->  HIT')
             return cached
+        print('lookup:', key, ' -->  MISS')
 
         # Not in cache: build schema list using increasing selector
         # sequences.

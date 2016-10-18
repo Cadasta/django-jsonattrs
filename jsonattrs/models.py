@@ -104,6 +104,11 @@ class Schema(models.Model):
 
 
 def compose_schemas(*schemas):
+    key = 'jsonattrs:compose:' + ','.join([s.pk for s in schemas])
+    cached = caches['jsonattrs'].get(key)
+    if cached is not None:
+        return cached
+
     # Extract schema attributes, names of required attributes and
     # names of attributes with defaults, composing schemas.
     sattrs = [s.attributes.select_related('attr_type').all() for s in schemas]
@@ -119,6 +124,7 @@ def compose_schemas(*schemas):
     default_attrs = {n for n, a in attrs.items()
                      if a.default is not None and a.default != ''}
 
+    caches['jsonattrs'].set(key, (attrs, required_attrs, default_attrs))
     return attrs, required_attrs, default_attrs
 
 

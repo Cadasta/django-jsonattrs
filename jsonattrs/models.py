@@ -5,27 +5,19 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import get_language
-from django.core.cache import caches
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import JSONField
 
 
-def schema_cache_key(content_type, selectors):
-    return (
-        'jsonattrs:schema:' +
-        content_type.app_label + ',' + content_type.model + ':' +
-        ','.join(str(s) for s in selectors)
-    )
-
-
 class SchemaManager(models.Manager):
+    cache = dict()
     content_type_to_selectors = dict()
 
     @classmethod
     def invalidate_cache(cls):
-        caches['jsonattrs:schema'].clear()
+        cls.cache = dict()
 
     def lookup(self, instance=None, content_type=None, selectors=None):
         if instance is not None and content_type is None:
@@ -38,11 +30,9 @@ class SchemaManager(models.Manager):
 
         # Look for schema list in cache, keyed by content type and
         # selector list.
-        key = schema_cache_key(content_type, selectors)
-        cache = caches['jsonattrs:schema']
-        cached = cache.get(key)
-        if cached is not None:
-            return cached
+        key = (content_type, selectors)
+        if key in self.cache:
+            return self.cache[key]
 
         # Not in cache: build schema list using increasing selector
         # sequences.
@@ -50,7 +40,7 @@ class SchemaManager(models.Manager):
         schemas = []
         for i in range(len(selectors) + 1):
             schemas += list(base_schemas.filter(selectors=selectors[:i]))
-            cache.set(key, schemas)
+        self.cache[key] = schemas
         return schemas
 
     def from_instance(self, instance):
@@ -107,7 +97,7 @@ class Schema(models.Model):
 def compose_schemas(*schemas):
     # Extract schema attributes, names of required attributes and
     # names of attributes with defaults, composing schemas.
-    sattrs = [s.attributes.all() for s in schemas]
+    sattrs = [s.attributes.select_related('attr_type').all() for s in schemas]
     attrs = OrderedDict()
     for sas in sattrs:
         for sa in sas:

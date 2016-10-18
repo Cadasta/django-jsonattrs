@@ -104,7 +104,7 @@ class Schema(models.Model):
 
 
 def compose_schemas(*schemas):
-    key = 'jsonattrs:compose:' + ','.join([s.pk for s in schemas])
+    key = 'jsonattrs:compose:' + ','.join([str(s.pk) for s in schemas])
     cached = caches['jsonattrs'].get(key)
     if cached is not None:
         return cached

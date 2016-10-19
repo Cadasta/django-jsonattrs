@@ -69,6 +69,7 @@ class SchemaManager(models.Manager):
         selectors = []
         for s in self.content_type_to_selectors[content_type]:
             selector = instance
+            s = s.replace('.pk', '_id')
             for step in s.split('.'):
                 selector = getattr(selector, step, None)
             selectors.append(str(selector))

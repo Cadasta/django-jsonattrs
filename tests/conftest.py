@@ -55,7 +55,7 @@ def pytest_configure():
                 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
                 'LOCATION': 'default'
             },
-            'jsonattrs:schema': {
+            'jsonattrs': {
                 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
                 'LOCATION': 'jsonattrs:schema'
             }

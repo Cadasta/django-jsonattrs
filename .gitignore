@@ -64,3 +64,5 @@ target/
 /.envrc
 /.virtualenv/
 /example/db.sqlite3
+
+.DS_Store

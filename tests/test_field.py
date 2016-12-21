@@ -53,6 +53,10 @@ class FieldSchemaTest(FieldTestBase):
         assert 'homeowner' in tstparty.attrs.attributes
         assert len(tstparty.attrs.attributes) == 4
 
+        party = Party.objects.get(name='Bilbo Baggins')
+        assert 'dob' in party.attrs
+        assert 'homeowner' in party.attrs
+
     def test_schema_composition_with_omit(self):
         tstparty = Party.objects.create(
             project=self.fixtures['proj12'],

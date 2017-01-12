@@ -1,6 +1,7 @@
 from collections import UserDict
 import json
 from datetime import date, datetime
+from decimal import Decimal
 
 from psycopg2.extras import Json
 
@@ -163,15 +164,18 @@ def schema_update_conflicts(instance):
 # passed as the custom "dumps" method for psycopg2's Json class to
 # use.
 
+def convert(val):
+    if isinstance(val, datetime) or isinstance(val, date):
+        return val.isoformat()
+    elif isinstance(val, Decimal):
+        return float(val)
+    else:
+        raise TypeError(
+            "{} can not be converted to JSON.".format(type(val).__name__))
+
+
 def json_serialiser(obj):
-    return json.dumps(
-        obj,
-        default=lambda obj: (
-            obj.isoformat()
-            if isinstance(obj, datetime) or isinstance(obj, date)
-            else None
-        )
-    )
+    return json.dumps(obj, default=convert)
 
 
 class JSONAttributeField(JSONField):

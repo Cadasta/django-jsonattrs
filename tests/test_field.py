@@ -1,9 +1,35 @@
 import pytest
+from decimal import Decimal
+from datetime import date, datetime
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
 from .fixtures import create_fixtures
 from .models import Organization, Project, Party, Parcel
+from jsonattrs.fields import convert
+
+
+def test_convert_decimal():
+    val = Decimal('1.1')
+    assert convert(val) == 1.1
+
+
+def test_convert_date():
+    val = date(2017, 1, 12)
+    assert convert(val) == '2017-01-12'
+
+
+def test_convert_datetime():
+    val = datetime(2017, 1, 12, 13, 6, 11)
+    assert convert(val) == '2017-01-12T13:06:11'
+
+
+def test_convert_unknown():
+    val = ValidationError('Some Error')
+    with pytest.raises(TypeError) as e:
+        convert(val)
+    print(e.value)
+    assert 'ValidationError can not be converted to JSON.' == str(e.value)
 
 
 class FieldTestBase(TestCase):

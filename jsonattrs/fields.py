@@ -14,12 +14,15 @@ from .exceptions import SchemaUpdateConflict, SchemaUpdateException
 
 
 class JSONAttributes(UserDict):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data={}, *args, **kwargs):
+        self._init_done = False
         self._schemas = None
         self._instance = None
         self._setup = False
         self._saved_selectors = None
-        super().__init__(*args, **kwargs)
+        self._db_val = data
+        super().__init__(data, *args, **kwargs)
+        self._init_done = True
 
     def setup_from_dict(self, dict):
         self.setup_schema()
@@ -57,6 +60,8 @@ class JSONAttributes(UserDict):
                     self[key] = self._attrs[key].default
 
     def _pre_save_selector_check(self, strict=False):
+        if not self._setup:
+            self.setup_from_dict(self._db_val)
         old_selectors = self._saved_selectors
         new_selectors = Schema.objects._get_selectors(self._instance)
         self._saved_selectors = new_selectors
@@ -114,12 +119,15 @@ class JSONAttributes(UserDict):
             raise KeyError(key)
 
     def __getitem__(self, key):
+        if not self._setup:
+            self.setup_from_dict(self._db_val)
         self._check_key(key)
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        self._check_key(key)
-        self._attrs[key].validate(value)
+        if self._init_done:
+            self._check_key(key)
+            self._attrs[key].validate(value)
         return super().__setitem__(key, value)
 
     def __delitem__(self, key):
@@ -184,9 +192,6 @@ class JSONAttributeField(JSONField):
     def __init__(self, *args, **kwargs):
         kwargs['default'] = JSONAttributes
         super().__init__(*args, **kwargs)
-
-    # def to_python(self, value):
-    #     return JSONAttributes(value)
 
     def from_db_value(self, value, expression, connection, context):
         return value

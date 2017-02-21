@@ -11,14 +11,13 @@ def fixup_instance(sender, **kwargs):
         if isinstance(f, JSONAttributeField):
             fi = getattr(instance, f.name)
             if not isinstance(fi, JSONAttributes):
-                setattr(instance, f.name, JSONAttributes())
+                setattr(instance, f.name, JSONAttributes(fi))
             fld = getattr(instance, f.name)
             fld._instance = instance
             if hasattr(instance, '_attr_field'):
                 raise FieldError('multiple JSONAttributeField fields: '
                                  'only one is allowed per model!')
             instance._attr_field = fld
-            fld.setup_from_dict(fi)
     if not hasattr(instance, '_attr_field'):
         raise FieldError('missing JSONAttributeField field in '
                          'fixup_instance decorator')

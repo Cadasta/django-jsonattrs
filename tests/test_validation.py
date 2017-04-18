@@ -87,6 +87,8 @@ class ValidationTest(TestCase):
         )
         with pytest.raises(ValidationError):
             attr.validate('')
+        with pytest.raises(ValidationError):
+            attr.validate([''])
 
     def test_validate_empty_select_multiple(self):
         attr = Attribute.objects.create(
@@ -115,3 +117,5 @@ class ValidationTest(TestCase):
 
         with pytest.raises(ValidationError):
             attr.validate('')
+        with pytest.raises(ValidationError):
+            attr.validate([''])

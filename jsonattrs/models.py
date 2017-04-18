@@ -281,15 +281,17 @@ class Attribute(models.Model):
         self.choice_labels_xlat = value
 
     def validate(self, value):
+        empty_vals = ('', [''], )
+
         if (self.required and self.default == '' and
-           (value is None or value == '')):
+           (value is None or value in empty_vals)):
             raise ValidationError(
                 _('Missing required field %(field)s'),
                 params={'field': self.name}
             )
 
         atype = self.attr_type
-        if (value in ('', ['']) and
+        if (value in empty_vals and
                 atype.name in ('integer', 'decimal', 'select_one',
                                'select_multiple')):
             value = None

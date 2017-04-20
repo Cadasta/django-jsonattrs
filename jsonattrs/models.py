@@ -281,13 +281,22 @@ class Attribute(models.Model):
         self.choice_labels_xlat = value
 
     def validate(self, value):
+        empty_vals = ('', [''], )
+
         if (self.required and self.default == '' and
-           (value is None or value == '')):
+           (value is None or value in empty_vals)):
             raise ValidationError(
                 _('Missing required field %(field)s'),
                 params={'field': self.name}
             )
-        if self.choices is not None and self.choices != []:
+
+        atype = self.attr_type
+        if (value in empty_vals and
+                atype.name in ('integer', 'decimal', 'select_one',
+                               'select_multiple')):
+            value = None
+
+        if self.choices is not None and self.choices != [] and value:
             if type(value) == list:
                 for v in value:
                     if v not in self.choices:
@@ -300,7 +309,7 @@ class Attribute(models.Model):
                     _('Invalid choice for %(field)s: "%(value)s"'),
                     params={'field': self.name, 'value': value}
                 )
-        atype = self.attr_type
+
         if isinstance(value, str):
             if (atype.validator_re is not None and
                re.match(atype.validator_re, value) is None):

@@ -14,4 +14,4 @@ factory_boy==2.8.1
 wheel==0.29.0
 
 # Sphinx for documentation builds
-Sphinx==1.6.2
+Sphinx==1.6.3

@@ -105,8 +105,11 @@ class Schema(models.Model):
 def compose_schemas(*schemas):
     key = 'jsonattrs:compose:' + ','.join([str(s.pk) for s in schemas])
     cached = caches['jsonattrs'].get(key)
-    if cached is not None:
-        return cached
+    if cached:
+        s_attrs, required_attrs, default_attrs = cached
+        # Deserialize attrs when retrieving from cache
+        attrs = OrderedDict((k, Attribute(**v)) for k, v in s_attrs.items())
+        return attrs, required_attrs, default_attrs
 
     # Extract schema attributes, names of required attributes and
     # names of attributes with defaults, composing schemas.
@@ -123,7 +126,9 @@ def compose_schemas(*schemas):
     default_attrs = {n for n, a in attrs.items()
                      if a.default is not None and a.default != ''}
 
-    caches['jsonattrs'].set(key, (attrs, required_attrs, default_attrs))
+    # Serialize attrs to make it smaller in cache
+    s_attrs = OrderedDict((k, v.to_dict()) for k, v in attrs.items())
+    caches['jsonattrs'].set(key, (s_attrs, required_attrs, default_attrs))
     return attrs, required_attrs, default_attrs
 
 
@@ -251,6 +256,12 @@ class Attribute(models.Model):
 
     objects = AttributeManager()
 
+    def __str__(self):
+        return "<Attribute #{0.id}: name={0.name}>".format(self)
+
+    def __repr__(self):
+        return str(self)
+
     @property
     def long_name(self):
         if self.long_name_xlat is None or isinstance(self.long_name_xlat, str):
@@ -344,3 +355,9 @@ class Attribute(models.Model):
                 return ', '.join(result)
             else:
                 return self.choice_dict.get(val, val)
+
+    def to_dict(self):
+        return {
+            k: v for k, v in self.__dict__.items()
+            if k in [f.attname for f in self._meta.fields]
+        }

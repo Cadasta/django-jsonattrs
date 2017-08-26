@@ -1,6 +1,6 @@
 Django==1.11.4
 djangorestframework==3.6.4
-psycopg2==2.7.3
+psycopg2==2.7.3.1
 
 # Test requirements
 tox==2.7.0

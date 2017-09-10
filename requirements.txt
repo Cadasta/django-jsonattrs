@@ -11,7 +11,7 @@ flake8==3.4.1
 factory-boy==2.9.2
 
 # wheel for PyPI installs
-wheel==0.29.0
+wheel==0.30.0
 
 # Sphinx for documentation builds
 Sphinx==1.6.3

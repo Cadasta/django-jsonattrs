@@ -84,7 +84,7 @@ setup(
     packages=get_packages(package),
     package_data=get_package_data(package),
     install_requires=[
-        'Django==1.11.5',
+        'Django==1.11.6',
         'django-audit-log==0.7.0'
     ],
     classifiers=[

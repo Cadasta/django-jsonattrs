@@ -194,7 +194,7 @@ def desc_classes(c):
             sscs += desc_classes(sc)
         scs += sscs
         return scs
-    except:
+    except TypeError:
         return []
 
 

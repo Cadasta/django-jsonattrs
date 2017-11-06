@@ -1,5 +1,5 @@
 Django==1.11.7
-djangorestframework==3.7.2
+djangorestframework==3.7.3
 psycopg2==2.7.3.2
 
 # Test requirements

@@ -124,12 +124,6 @@ class JSONAttributes(UserDict):
         if key not in self._attrs and key not in self:
             raise KeyError(key)
 
-    def __getitem__(self, key):
-        if not self._setup:
-            self.setup_from_dict(self._db_val)
-        self._check_key(key)
-        return super().__getitem__(key)
-
     def __setitem__(self, key, value):
         if self._init_done:
             self._check_key(key)
@@ -201,14 +195,3 @@ class JSONAttributeField(JSONField):
         return (Json(dict(value), dumps=json_serialiser)
                 if isinstance(value, dict)
                 else super().get_prep_lookup(lookup_type, value))
-
-    # def validate(self, value, model_instance):
-    #     super(JSONField, self).validate(value, model_instance)
-    #     try:
-    #         json.dumps(dict(value))
-    #     except TypeError:
-    #         raise exceptions.ValidationError(
-    #             self.error_messages['invalid'],
-    #             code='invalid',
-    #             params={'value': value},
-    #         )

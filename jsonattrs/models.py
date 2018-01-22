@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import logging
 import re
 
 from django.db import models
@@ -12,6 +13,9 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import JSONField
 
 
+logger = logging.getLogger(__name__)
+
+
 def schema_cache_key(content_type, selectors):
     return ('jsonattrs:schema:' +
             content_type.app_label + ',' + content_type.model + ':' +
@@ -23,7 +27,10 @@ class SchemaManager(models.Manager):
 
     @classmethod
     def invalidate_cache(cls):
-        caches['jsonattrs'].clear()
+        try:
+            caches['jsonattrs'].clear()
+        except Exception:
+            logger.exception("Failed to clear cache")
 
     def lookup(self, instance=None, content_type=None, selectors=None):
         if instance is not None and content_type is None:
@@ -37,7 +44,14 @@ class SchemaManager(models.Manager):
         # Look for schema list in cache, keyed by content type and
         # selector list.
         key = schema_cache_key(content_type, selectors)
-        cached = caches['jsonattrs'].get(key)
+        cache_failed = False
+        try:
+            cached = caches['jsonattrs'].get(key)
+        except Exception:
+            logger.exception("Failed to read from cache")
+            cached = None
+            cache_failed = True
+
         if cached is not None:
             return cached
 
@@ -47,7 +61,11 @@ class SchemaManager(models.Manager):
         schemas = []
         for i in range(len(selectors) + 1):
             schemas += list(base_schemas.filter(selectors=selectors[:i]))
-        caches['jsonattrs'].set(key, schemas)
+        if not cache_failed:
+            try:
+                caches['jsonattrs'].set(key, schemas)
+            except Exception:
+                logger.exception("Failed to write to cache")
         return schemas
 
     def from_instance(self, instance):
@@ -104,7 +122,13 @@ class Schema(models.Model):
 
 def compose_schemas(*schemas):
     key = 'jsonattrs:compose:' + ','.join([str(s.pk) for s in schemas])
-    cached = caches['jsonattrs'].get(key)
+    cache_failed = False
+    try:
+        cached = caches['jsonattrs'].get(key)
+    except Exception:
+        logger.exception("Failed to read from cache")
+        cache_failed = True
+        cached = None
     if cached:
         s_attrs, required_attrs, default_attrs = cached
         # Deserialize attrs when retrieving from cache
@@ -128,7 +152,14 @@ def compose_schemas(*schemas):
 
     # Serialize attrs to make it smaller in cache
     s_attrs = OrderedDict((k, v.to_dict()) for k, v in attrs.items())
-    caches['jsonattrs'].set(key, (s_attrs, required_attrs, default_attrs))
+
+    if not cache_failed:
+        try:
+            caches['jsonattrs'].set(
+                key, (s_attrs, required_attrs, default_attrs))
+        except Exception:
+            logger.exception("Failed to write to cache")
+
     return attrs, required_attrs, default_attrs
 
 

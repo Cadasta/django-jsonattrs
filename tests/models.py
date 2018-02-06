@@ -1,4 +1,9 @@
-from django.core.urlresolvers import reverse
+try:
+    # For Django 1.11.x
+    from django.core.urlresolvers import reverse
+except ImportError:
+    # For Django 2.x
+    from django.urls import reverse
 from django.db import models
 
 from jsonattrs.fields import JSONAttributeField
@@ -20,7 +25,7 @@ class Organization(models.Model):
 @fix_model_for_attributes
 class Project(models.Model):
     name = models.CharField(max_length=100)
-    organization = models.ForeignKey(Organization)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     attrs = JSONAttributeField()
 
     class Meta:
@@ -32,7 +37,7 @@ class Project(models.Model):
 
 @fix_model_for_attributes
 class Party(models.Model):
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     attrs = JSONAttributeField()
 
@@ -48,7 +53,7 @@ class Party(models.Model):
 
 @fix_model_for_attributes
 class Parcel(models.Model):
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     type = models.CharField(max_length=20)
     address = models.CharField(max_length=200)
     attrs = JSONAttributeField()

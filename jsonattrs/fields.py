@@ -24,6 +24,9 @@ class JSONAttributes(UserDict):
         super().__init__(data, *args, **kwargs)
         self._init_done = True
 
+    def __repr__(self):
+        return "JSONAttributes({})".format(super().__repr__())
+
     def setup_from_dict(self, data_dict):
         self.setup_schema()
         if data_dict is None or len(data_dict) == 0:

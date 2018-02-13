@@ -163,6 +163,10 @@ def choices_compatible(new_choices, old_choices, value):
 
 
 def convert(val):
+    # This is needed to provide JSON serialisation for date objects
+    # whenever they're saved to JSON attribute fields.  This function is
+    # passed as the custom "dumps" method for psycopg2's Json class to
+    # use.
     if isinstance(val, datetime) or isinstance(val, date):
         return val.isoformat()
     elif isinstance(val, Decimal):

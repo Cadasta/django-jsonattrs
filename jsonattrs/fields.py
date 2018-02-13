@@ -162,22 +162,6 @@ def choices_compatible(new_choices, old_choices, value):
     return new_choices is None or len(new_choices) == 0 or value in new_choices
 
 
-def schema_update_conflicts(instance):
-    if not hasattr(instance, '_attr_field'):
-        raise ValueError("instance doesn't have an attribute field")
-    conflicts = []
-    try:
-        instance._attr_field._pre_save_selector_check(strict=True)
-    except SchemaUpdateException as exc_info:
-        conflicts = exc_info.conflicts
-    return conflicts
-
-
-# This is needed to provide JSON serialisation for date objects
-# whenever they're saved to JSON attribute fields.  This function is
-# passed as the custom "dumps" method for psycopg2's Json class to
-# use.
-
 def convert(val):
     if isinstance(val, datetime) or isinstance(val, date):
         return val.isoformat()

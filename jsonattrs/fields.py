@@ -24,13 +24,13 @@ class JSONAttributes(UserDict):
         super().__init__(data, *args, **kwargs)
         self._init_done = True
 
-    def setup_from_dict(self, dict):
+    def setup_from_dict(self, data_dict):
         self.setup_schema()
-        if dict is None or len(dict) == 0:
+        if data_dict is None or len(data_dict) == 0:
             self._setup = False
         else:
-            self._check_required_keys(dict.keys())
-            for k, v in dict.items():
+            self._check_required_keys(data_dict.keys())
+            for k, v in data_dict.items():
                 self._check_key(k)
                 self._attrs[k].validate(v)
                 self[k] = v
@@ -114,6 +114,9 @@ class JSONAttributes(UserDict):
                 )
 
     def _check_key(self, key):
+        """
+        Ensure key is either in schema's attributes or already set on self.
+        """
         self.setup_schema()
         if key not in self._attrs and key not in self:
             raise KeyError(key)

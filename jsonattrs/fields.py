@@ -64,7 +64,8 @@ class JSONAttributes(UserDict):
 
     def _pre_save_selector_check(self, strict=False):
         if not self._setup:
-            self.setup_from_dict(self._db_val)
+            self.setup_from_dict(self._db_val if self._instance._state.adding
+                                 else self._get_from_instance())
         old_selectors = self._saved_selectors
         new_selectors = Schema.objects._get_selectors(self._instance)
         self._saved_selectors = new_selectors

@@ -4,6 +4,7 @@ from datetime import date, datetime
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
+from .factories import OrganizationFactory
 from .fixtures import create_fixtures
 from .models import Organization, Project, Party, Parcel
 from jsonattrs.fields import convert
@@ -180,6 +181,17 @@ class FieldAttributeTest(FieldTestBase):
         assert Party.objects.count() == 45
         print([(p.name, p.attrs) for p in Party.objects.all()])
         assert Party.objects.filter(attrs={'homeowner': 'False'}).count() == 5
+
+    def test_cast_to_dict_with_unknown_attr(self):
+        """
+        Ensure that data with unknown attributes can still be cast to dict.
+        This is used by DRF's JSONRenderer to render models with a
+        JSONAttribute field to JSON.
+        """
+        prj = Organization.objects.bulk_create([  # Skip validation on create
+            OrganizationFactory.build(attrs={'foo': 'bar'})
+        ])[0]
+        assert dict(prj.attrs) == {'foo': 'bar'}
 
 
 class FieldDbTest(FieldTestBase):

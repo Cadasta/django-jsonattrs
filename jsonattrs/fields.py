@@ -34,6 +34,9 @@ class JSONAttributes(UserDict):
         else:
             self._check_required_keys(data_dict.keys())
             for k, v in data_dict.items():
+                if k not in self._attrs.keys():
+                    raise ValidationError('Unknown key "{}"'.format(k))
+
                 self._check_key(k)
                 self._attrs[k].validate(v)
                 self[k] = v

@@ -24,13 +24,19 @@ class JSONAttributes(UserDict):
         super().__init__(data, *args, **kwargs)
         self._init_done = True
 
-    def setup_from_dict(self, dict):
+    def __repr__(self):
+        return "JSONAttributes({})".format(super().__repr__())
+
+    def setup_from_dict(self, data_dict):
         self.setup_schema()
-        if dict is None or len(dict) == 0:
+        if data_dict is None or len(data_dict) == 0:
             self._setup = False
         else:
-            self._check_required_keys(dict.keys())
-            for k, v in dict.items():
+            self._check_required_keys(data_dict.keys())
+            for k, v in data_dict.items():
+                if k not in self._attrs.keys():
+                    raise ValidationError('Unknown key "{}"'.format(k))
+
                 self._check_key(k)
                 self._attrs[k].validate(v)
                 self[k] = v
@@ -114,6 +120,9 @@ class JSONAttributes(UserDict):
                 )
 
     def _check_key(self, key):
+        """
+        Ensure key is either in schema's attributes or already set on self.
+        """
         self.setup_schema()
         if key not in self._attrs and key not in self:
             raise KeyError(key)
@@ -156,23 +165,11 @@ def choices_compatible(new_choices, old_choices, value):
     return new_choices is None or len(new_choices) == 0 or value in new_choices
 
 
-def schema_update_conflicts(instance):
-    if not hasattr(instance, '_attr_field'):
-        raise ValueError("instance doesn't have an attribute field")
-    conflicts = []
-    try:
-        instance._attr_field._pre_save_selector_check(strict=True)
-    except SchemaUpdateException as exc_info:
-        conflicts = exc_info.conflicts
-    return conflicts
-
-
-# This is needed to provide JSON serialisation for date objects
-# whenever they're saved to JSON attribute fields.  This function is
-# passed as the custom "dumps" method for psycopg2's Json class to
-# use.
-
 def convert(val):
+    # This is needed to provide JSON serialisation for date objects
+    # whenever they're saved to JSON attribute fields.  This function is
+    # passed as the custom "dumps" method for psycopg2's Json class to
+    # use.
     if isinstance(val, datetime) or isinstance(val, date):
         return val.isoformat()
     elif isinstance(val, Decimal):

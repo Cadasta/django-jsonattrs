@@ -28,7 +28,6 @@ def test_convert_unknown():
     val = ValidationError('Some Error')
     with pytest.raises(TypeError) as e:
         convert(val)
-    print(e.value)
     assert 'ValidationError can not be converted to JSON.' == str(e.value)
 
 
@@ -76,6 +75,14 @@ class FieldSchemaTest(FieldTestBase):
 
 
 class FieldAttributeTest(FieldTestBase):
+    def test_validate_unknown_key(self):
+        with pytest.raises(ValidationError) as e:
+            Organization.objects.create(
+                name='tstorg',
+                attrs={'home_office': 'London', 'unknown': False}
+            )
+        assert 'Unknown key "unknown"' in e.value
+
     def test_attributes_defaults(self):
         tstorg = Organization.objects.create(name='tstorg')
         assert len(tstorg.attrs.attributes) == 1
@@ -178,7 +185,6 @@ class FieldAttributeTest(FieldTestBase):
 
     def test_attributes_lookup_dict(self):
         assert Party.objects.count() == 45
-        print([(p.name, p.attrs) for p in Party.objects.all()])
         assert Party.objects.filter(attrs={'homeowner': 'False'}).count() == 5
 
 

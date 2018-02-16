@@ -1,3 +1,5 @@
+import functools
+
 from django.core.exceptions import FieldError
 
 from .fields import JSONAttributes, JSONAttributeField
@@ -31,6 +33,8 @@ def fixup_instance(sender, **kwargs):
 
         # Cache model instance on JSONAttributes instance and vice-versa
         attrs._instance = instance
+        attrs._get_from_instance = functools.partial(
+            getattr, instance, field_name)
         instance._attr_field = attrs
 
     if not hasattr(instance, '_attr_field'):

@@ -3,7 +3,6 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 
 from jsonattrs.exceptions import SchemaUpdateConflict, SchemaUpdateException
-from jsonattrs.fields import schema_update_conflicts
 
 from .fixtures import create_fixtures, create_labelled_schemata
 from .models import Party, Labelled
@@ -184,60 +183,3 @@ class LabelledSelectorUpdateTest(LabelledModelTest):
     def test_change_choices_list_exclude_current(self):
         self.doit('change_choices',
                   present=('f1', 'f2', 'f3', 'f4'))
-
-
-class LabelledSchemaUpdateConflictCheckTest(LabelledModelTest):
-    def setUp(self):
-        super().setUp()
-        self.obj = Labelled.objects.create(
-            name='initial',
-            label='initial',
-            attrs={'f1': 'ABC', 'f2': 'f2_val', 'f3': 123, 'f4': 'def'}
-        )
-        self.check(('f1', 'f2', 'f3', 'f4'))
-
-    def doit(self, label, conflicts=[]):
-        self.obj.label = label
-        assert schema_update_conflicts(self.obj) == conflicts
-
-    def test_remove_non_required_field(self):
-        self.doit('remove_non_required')
-
-    def test_remove_required_field(self):
-        self.doit('remove_required')
-
-    def test_add_new_non_required_field(self):
-        self.doit('new_non_required')
-
-    def test_add_new_required_field_no_default(self):
-        self.doit('new_required_no_default',
-                  [SchemaUpdateConflict('f5', 'required_no_default')])
-
-    def test_add_new_required_field_default(self):
-        self.doit('new_required_default')
-
-    def test_change_field_type_compatible(self):
-        self.doit('type_compatible')
-
-    def test_change_field_type_incompatible(self):
-        self.doit('type_incompatible',
-                  [SchemaUpdateConflict('f2', 'incompatible_type')])
-
-    def test_remove_choices_list(self):
-        self.doit('remove_choices')
-
-    def test_add_choices_list_include_current(self):
-        self.doit('add_choices')
-
-    def test_add_choices_list_exclude_current(self):
-        self.obj.attrs['f1'] = 'XYZ'
-        self.doit('add_choices',
-                  [SchemaUpdateConflict('f1', 'incompatible_choices')])
-
-    def test_change_choices_list_include_current(self):
-        self.obj.attrs['f4'] = 'ghi'
-        self.doit('change_choices')
-
-    def test_change_choices_list_exclude_current(self):
-        self.doit('change_choices',
-                  [SchemaUpdateConflict('f4', 'incompatible_choices')])

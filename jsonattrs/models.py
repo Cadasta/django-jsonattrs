@@ -103,6 +103,15 @@ class Schema(models.Model):
 
 
 def compose_schemas(*schemas):
+    """
+    Returns a single three-ple of the following for all provided schemas:
+        - a map of attribute names to attributes for all related schema
+        attributes
+        - a set of names of all related required schema attributes
+        - a set of names of all related default schema attributes
+    For the sake of performance, values are written-to and returned-from the
+    jsonattrs cache.
+    """
     key = 'jsonattrs:compose:' + ','.join([str(s.pk) for s in schemas])
     cached = caches['jsonattrs'].get(key)
     if cached:
@@ -113,15 +122,19 @@ def compose_schemas(*schemas):
 
     # Extract schema attributes, names of required attributes and
     # names of attributes with defaults, composing schemas.
-    sattrs = [s.attributes.select_related('attr_type').all() for s in schemas]
+    schema_attrs = [
+        s.attributes.select_related('attr_type').all() for s in schemas]
     attrs = OrderedDict()
-    for sas in sattrs:
-        for sa in sas:
-            if sa.omit:
-                if sa.name in attrs:
-                    del attrs[sa.name]
+    required_attrs = set()
+    default_attrs = set()
+    for attributes in schema_attrs:
+        for attr in attributes:
+            if attr.omit:
+                if attr.name in attrs:
+                    del attrs[attr.name]
             else:
-                attrs[sa.name] = sa
+                attrs[attr.name] = attr
+
     required_attrs = {n for n, a in attrs.items() if a.required}
     default_attrs = {n for n, a in attrs.items()
                      if a.default is not None and a.default != ''}

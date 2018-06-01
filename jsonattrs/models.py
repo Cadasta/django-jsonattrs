@@ -358,6 +358,8 @@ class Attribute(models.Model):
             return {c: l for c, l in zip(self.choices, self.choice_labels)}
 
     def render(self, val):
+        if val is None:
+            return ''
         if self.choice_dict is None:
             return val
         else:

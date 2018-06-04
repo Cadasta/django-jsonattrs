@@ -99,3 +99,47 @@ class ComposeSchemaTest(TestCase):
         attr = Attribute(name='testattr', id=123)
         assert str(attr) == '<Attribute #123: name=testattr>'
         assert repr(attr) == '<Attribute #123: name=testattr>'
+
+
+class AttributeTest(TestCase):
+    def setUp(self):
+        self.fixtures = create_fixtures(do_schemas=False, load_attr_types=True)
+        self.schema = Schema.objects.create(
+            content_type=self.fixtures['party_t'], selectors=()
+        )
+
+    def test_render_integer(self):
+        attr_type = AttributeType.objects.get(name='integer')
+        attr = Attribute.objects.create(
+            schema_id=self.schema.id,
+            name='integer',
+            long_name='Test attribute integer',
+            index=0,
+            attr_type_id=attr_type.id,
+        )
+        assert attr.render(None) == ''
+        assert attr.render(12) == 12
+
+    def test_render_decimal(self):
+        attr_type = AttributeType.objects.get(name='decimal')
+        attr = Attribute.objects.create(
+            schema_id=self.schema.id,
+            name='decimal',
+            long_name='Test attribute decimal',
+            index=0,
+            attr_type_id=attr_type.id,
+        )
+        assert attr.render(None) == ''
+        assert attr.render(12.5) == 12.5
+
+    def test_render_date(self):
+        attr_type = AttributeType.objects.get(name='date')
+        attr = Attribute.objects.create(
+            schema_id=self.schema.id,
+            name='date',
+            long_name='Test attribute date',
+            index=0,
+            attr_type_id=attr_type.id,
+        )
+        assert attr.render(None) == ''
+        assert attr.render('2018-05-31') == '2018-05-31'

@@ -3,7 +3,7 @@ djangorestframework==3.8.2
 psycopg2==2.7.5
 
 # Test requirements
-tox==3.2.0
+tox==3.2.1
 pytest-django==3.3.3
 pytest==3.7.1
 pytest-cov==2.5.1

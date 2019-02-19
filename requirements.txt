@@ -5,9 +5,9 @@ psycopg2==2.7.7
 # Test requirements
 tox==3.7.0
 pytest-django==3.4.7
-pytest==4.2.1
+pytest==4.3.0
 pytest-cov==2.6.1
-flake8==3.7.5
+flake8==3.7.6
 factory-boy==2.11.1
 
 # wheel for PyPI installs

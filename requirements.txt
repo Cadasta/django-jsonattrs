@@ -5,7 +5,7 @@ psycopg2==2.7.7
 # Test requirements
 tox==3.7.0
 pytest-django==3.4.8
-pytest==4.3.0
+pytest==4.3.1
 pytest-cov==2.6.1
 flake8==3.7.7
 factory-boy==2.11.1
